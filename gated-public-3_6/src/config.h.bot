@@ -1,0 +1,113 @@
+/* config.h.bot - start */
+
+/* Force int32 to be 4 bytes */
+#if (SIZEOF_LONG == 8)
+#define int32 int
+#define u_int32 unsigned int
+#else
+#define int32 long
+#define u_int32 unsigned long
+#endif
+
+#define S_INT32 int32
+#define S_INT16 short
+#define U_INT16 unsigned short
+#define S_INT8  char
+#define U_INT8  unsigned char
+#define VOID_T  void *
+
+/* Probably need to add tests for these */
+#define NLIST(fd,nl,sz) nlist(fd,nl)
+#define NLIST_T struct nlist
+#define IFL_NAMELEN     16
+#define __GATED__       1
+#define ENVIRON environ
+#define SIGTYPE void
+#define POSIX_SIGNALS
+#define SIGRETURN       return
+
+/* These should go into options file somehow, I think */
+#define LOG_OPTIONS     LOG_PID | LOG_CONS | LOG_NDELAY
+#define LOG_FACILITY    LOG_DAEMON
+
+/* IBM's HighC supports varargs and prototypes if -Hnocpp is used, but
+ * this breaks ioctls and -Hpcc does not fix it.
+ */
+
+/* Systems that support ANSI varargs */
+#if     defined(__STDC__) && \
+    (!defined(ibm032) || (__GNUC__ > 1))
+#define STDARG
+#endif
+
+#define VOID_T               void *
+
+/* TRUE/FALSE macros */
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+/* Redefine random */
+#ifndef HAVE_RANDOM
+#ifdef HAVE_LRAND48
+# define random lrand48
+# define srandom srand48
+#else
+# define random rand
+# define srandom srand
+#endif
+#endif
+
+#ifndef HAVE_BCOPY
+#define bcopy(a, b, c)  memcpy(b, a, c)
+#endif
+#ifndef HAVE_BZERO
+#define bzero(s, n)  memset((s), 0, (n))
+#endif
+#ifndef HAVE_BCMP
+#define bcmp(a, b, c)  memcmp(b, a, c)
+#endif
+#ifndef HAVE_SETLINEBUF
+#define setlinebuf(s)   setvbuf(s, NULL, _IOLBF, 0)
+#endif
+#ifndef HAVE_TZSETWALL
+#define tzsetwall()             {unsetenv("TZ");tzset();}
+#endif
+
+/* POSIX compatible waitpid() */
+#ifdef  HAVE_WAITPID
+#define WAIT_T  int
+#define WIFCOREDUMP(statusp)    ((statusp & 0x80) == 0x80)
+#else   /* HAVE_WAITPID */
+#define waitpid(pid, statusp, options)  wait3(statusp, options, NULL)
+#define WAIT_T  union wait
+#ifndef WEXITSTATUS
+#define WEXITSTATUS(statusp)    (statusp.w_retcode)
+#endif  /* WEXITSTATUS */
+#ifndef WTERMSIG
+#define WTERMSIG(statusp)       (statusp.w_termsig)
+#endif  /* WTERMSIG */
+#ifndef WSTOPSIG
+#define WSTOPSIG(statusp)       (statusp.w_stopsig)
+#endif  /* WSTOPSIG */
+#define WIFCOREDUMP(statusp)    (statusp.w_coredump)
+#endif  /* HAVE_WAITPID */
+
+#ifdef HAVE_IFR_MTU
+#define KRT_IFR_MTU ifr_mtu
+#else
+#define KRT_IFR_MTU ifr_metric
+#endif
+
+/* Systems that do not have flock() */
+#ifndef HAVE_FLOCK
+#define LOCK_SH         1               /* Shared lock */
+#define LOCK_EX         2               /* Exclusive lock */
+#define LOCK_NB         4               /* Non-blocking lock */
+#define LOCK_UN         8               /* Unlock */
+#endif
+
+/* config.h.bot - end */

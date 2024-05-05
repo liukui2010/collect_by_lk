@@ -1,0 +1,203 @@
+*************************************
+NOTES ON THE NEW VERSION OF RTTHREADS
+*************************************
+
+This version of RtThreads supports two new potentially useful
+services: Asynchronous I/O and tracing.
+
+We recommend that you use Asynchronous I/O services always, even
+though RtThreads does not currently compile to use Asynchronous I/O by
+default (this may change for future versions) as the use of
+Asynchronous I/O services requires some setup on AIX before it can be
+used.
+
+Tracing is provided as a service to help in the debugging of those
+nasty threads-related bugs.  If you wish to use tracing, we recommend
+that you compile a seperate version of the libRtt.a library with
+tracing defined (perhaps as libRttTRACE.a).
+
+----------------
+ASYNCHRONOUS I/O
+----------------
+
+The RtThreads kernel can make use of asynchronous I/O services
+provided by SunOs, Solaris, and AIX.  By using these services, you can
+ensure that threads that are waiting for large IO requests will not
+block the entire Unix process in which RtThreads is running.
+
+To use Asynchronous I/O, you need to do the following:
+
+ALL ARCHITECTURES:
+
+** Compile libRtt.a with ASYNCIO defined.
+
+In src/rtt/Makefile and src/xtp/Makefile, uncomment out the following
+line:
+
+#USE_ASYNC = -DASYNCIO
+
+** If you wish to use the new Asynchronous I/O request services
+(RttAIORequest() and RttAIOWait()), you must also compile your
+application code with ASYNCIO defined.  It is not necessary to compile
+your application with ASYNCIO defined if you do not use these calls;
+if the library has been compiled with ASYNCIO defined all existing Rtt
+I/O calls will be asynchronous.
+
+ON SOLARIS:
+
+** At compilation time, link your application with the aio library.
+
+In your application Makefile, add "-laio" to the list of libraries
+your application links with.
+
+ON SUNOS:
+
+** No additional steps need to be taken.
+
+ON AIX:
+
+** Make the Asynchronous I/O services available both now and after
+each system restart.
+
+As root, run 'smit devices'.  Choose 'Asynchronous I/O'.  Select
+"Change/Show Characteristics of Asynchronous I/O".  You may modify any
+of the values you see to suit your needs, but you must make sure that
+"STATE to be configured at system restart" is set to "available".
+When this is done, return to the "Asynchronous I/O" screen (select
+"Cancel" if running under X, or F3 if on a terminal).  Select
+"Configure Defined Asynchronous I/O".  This will make Asynchronous I/O
+services available immediately.
+
+-------
+TRACING
+-------
+
+NOTE:  Tracing is currently only available for AIX.  It could be made
+available for SunOS or Solaris with the addition of a simple
+CheckStack function, written in SPARC assembly, or write a dummy one
+in C and never check for stack overflow.
+
+When tracing is enabled, various events are logged to a tracing file.
+These events include:
+
+* Thread creation
+* Initial thread execution
+* Thread destruction (thread exit via RttExit() or killed via
+  RttKill())
+* Context switches
+* SIGIO interrupts
+* Certain stack overflow conditions (causes core dump)
+* Instances when watched areas of memory get changed
+
+These events are normally written to a memory mapped file, which is
+upon occasion fsync()'ed to ensure it's proper updata on disk.  A memory
+mapped file is used for performance purposes, but this may result in
+some lost tracing data (data may not have been fsync()'ed before a
+catastrophic failure).  The size of the ptrace file is currently
+limited to 
+
+Trace files normally live in /tmp, and have the name ptrace.[pid],
+where [pid] is the pid of the process.
+
+The file ptrace.c can be edited to customized tracing.  In particular,
+it includes the following definitions/variables:
+
+#define PTRACE_FILE_SIZE	(1024 * 1024)
+
+	The maximum size of a tracing file.  If tracing information
+	grows beyond this limit, tracing information begins to be
+	logged from the beginning of the file again.
+
+#define DEFER_UPDATE
+
+	Comment out this line to ensure that the memory mapped file
+	is always updated to disk.
+
+static char *baseTraceFile = "/tmp/ptrace";
+
+	Change this to the base name you'd like to use for trace
+	files.  This name will have the pid of the process appended
+	to it.
+
+#define MAX_WATCH_VALUES 25
+
+	The maximum number of memory areas that can be watched
+	(see below).
+
+int *WatchPointer[MAX_WATCH_VALUES], WatchValue[MAX_WATCH_VALUES];
+int WatchCounter;
+
+	These values refer to the memory areas to be watched
+	(see below).
+
+WATCHING VALUES:
+
+The tracing routines can watch areas of memory, and record when they
+have been modified.  To use this service, do the following:
+
+** For each memory location you wish to watch, set WatchValue[x] to
+the value in memory, and WatchPointer[x] to point to the memory
+location.  Set WatchCounter to the number of areas you are watching.
+
+For example, to watch discover when a particular global variable
+ImportantState is getting trashed, you would do the following:
+
+WatchValue[WatchCounter] = ImportantState;
+WatchPointer[WatchCounter] = &ImportantState;
+WatchCounter++;
+
+If the value of ImportantState is ever changed, "STOMP" will be
+written to the trace file.  "STOMP" will be written if any of the
+watched values is changed, however tracing does not currently indicate
+which one of the MAX_WATCH_VALUES was "stomped" upon.
+
+If you change one of these values yourself, make sure you change
+WatchValue too, or the tracing facility will think the area has been
+stomped upon.
+
+TRACE FILE OUTPUT:
+
+The file kTypes.h includes all the definitions for trace outputs.
+
+* Thread creation:
+
+	C: [<process PCB ptr> <asciiname>]
+
+* Initial thread execution (start):
+
+	B: [<process PCB ptr> <asciiname>]
+
+* Thread exit:
+
+	X: [<process PCB ptr> <asciiname>]
+
+* Context switch:
+
+	CTX:
+		ts[<process PCB>]
+		tr[<process PCB>]
+
+	'ts' indicates the thread stopping
+	'tr' indicates the thread resuming
+
+* SIGIO:
+
+	SIO
+
+* Watched memory location modified:
+
+	STOMP
+
+
+Note that in the context switching code, a STOMP will be printed out
+*after* the CTX statement.  This means that, for the first occurance
+of STOMP, the watched area was stomped on by the thread which just
+stopped; look upwards in the trace file for the last CTX statement
+before the STOMP.
+
+OVERCOMING THE FILE SIZE LIMIT:
+
+If you don't wish to be limited by the PTRACE_FILE_SIZE, you'll need
+to modify ptrace.c and kTypes.h so that you do not use memory mapping,
+and so you do not use DEFER_UPDATE.  The ptrace file will be used as a
+regular file and should be limited only by your filesystem size.

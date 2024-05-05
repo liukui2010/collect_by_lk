@@ -1,0 +1,1718 @@
+Licenses/v3/stamp
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/gated/task.c)
+AM_INIT_AUTOMAKE(gated, gated-public-3_6)
+AM_CONFIG_HEADER(src/config.h)
+
+dnl Check for protocols to disable
+
+enabled_proto=
+enabled_v3_proto=
+enabled_v34_proto=
+enabled_v4_proto=
+enabled_v6_proto=
+enabled_mcast_proto=
+enabled_iso_proto=
+enabled_param=
+disabled_proto=
+disabled_param=
+
+dnl
+dnl This is for make dist.
+dnl
+all_dirs_v3="aspath bgp egp gated gatedcompat gdc gii icmp inet iso krt \
+	 krt_multi krt_os ospf ospf_monitor \
+	 rdisc rip ripquery scram slsp smux"
+
+all_dirs_v4="aspath bgp egp gated gatedcompat gdc gii icmp inet \
+	iso krt krt_multi krt_os new_isis new_ospf \
+	ospf ospf_monitor rdisc rip ripquery scram slsp wrd smux"
+
+all_dirs_v5="bgmp cbt dvmrp dvmrp_routing dwr gated \
+	gatedcompat gdc gii igmp inet iso krt krt_multi krt_os \
+	mcore mpbgp msdp pim pimdm pimsm rip ripquery \
+	scram smux"
+
+all_dirs_v6="aspath bgp bgp4mp gated gatedcompat gdc gii icmpv6 inet6 \
+	krt krt_ipv6multi krt_multi krt_os mld6 ripng rip6query \
+	scram smux"
+
+dnl
+dnl processes enable request defaulting to enable protocol if not set
+dnl _and_ there is a v3 license.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_V3_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		if test $enable_all = no; then
+			disabled_proto="$disabled_proto $1"
+			$1=no
+		else
+			enabled_v3_proto="$enabled_v3_proto $1"
+			$1=yes
+		fi
+	]])
+
+dnl
+dnl processes enable request defaulting to enable protocol if not set
+dnl _and_ there is a v3 or v4 license.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_V34_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		if test $enable_all = no; then
+			disabled_proto="$disabled_proto $1"
+			$1=no
+		else
+			enabled_v34_proto="$enabled_v34_proto $1"
+			$1=yes
+		fi
+	]])
+
+dnl
+dnl processes enable request defaulting to enable protocol if not set
+dnl _and_ there is a v4 license.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_V4_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		if test $enable_all = no; then
+			disabled_proto="$disabled_proto $1"
+			$1=no
+		else
+			enabled_v4_proto="$enabled_v4_proto $1"
+			$1=yes
+		fi
+	]])
+
+dnl
+dnl processes enable request for mcast routing protocol
+dnl defaulting to enable protocol if not set _and_ the machine
+dnl supports mcast routing _and_ there is a v5 license.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_V5_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		if test $enable_all = no; then
+			disabled_proto="$disabled_proto $1"
+			$1=no
+		else
+			enabled_v5_proto="$enabled_v5_proto $1"
+			$1=yes
+		fi
+	]])
+dnl
+
+dnl
+dnl processes enable request for ipv6 support.
+dnl defaulting to enable protocol if not set _and_ the machine
+dnl supports ipv6 _and_ there is a v6 license.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_V6_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+	if test $enable_all = no; then
+		disabled_proto="$disabled_proto $1"
+		$1=no
+	else
+		enabled_v6_proto="$enabled_v6_proto $1"
+		$1=yes
+	fi
+	]])
+dnl
+
+
+dnl processes enable request for iso routing protocol
+dnl defaulting to enable protocol if not set _and_ the machine
+dnl supports iso routing otherwise disabled
+dnl
+dnl currently all iso protocols are v4-license only, so 
+dnl a check is made for a v4 license later.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_ISO_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		if test $enable_all = no; then
+			disabled_proto="$disabled_proto $1"
+			$1=no
+		else
+			enabled_iso_proto="$enabled_iso_proto $1"
+			$1=yes
+		fi
+	]])
+
+dnl
+dnl processes enable request for core ("host") protocol
+dnl defaulting to enable protocol if not set.
+dnl
+AC_DEFUN(LOCAL_DEF_ENABLE_HOST_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		if test $enable_all = no; then
+			disabled_proto="$disabled_proto $1"
+			$1=no
+		else
+			enabled_host_proto="$enabled_host_proto $1"
+			$1=yes
+		fi
+	]])
+
+dnl
+dnl processes enable request defaulting to disable protocol if not set
+dnl
+AC_DEFUN(LOCAL_DEF_DISABLE_FEATURE, [[
+	if test $enableval = yes; then
+		enabled_proto="$enabled_proto $1"
+	else
+		disabled_proto="$disabled_proto $1"
+	fi
+	], [
+		disabled_proto="$disabled_proto $1"
+		$1=no
+	]])
+
+
+dnl
+dnl process non-protocol parameter request defaulting to disable if not set
+dnl
+AC_DEFUN(LOCAL_DEF_DISABLE_PARAM, [[
+	if test $enableval = yes; then
+		enabled_param="$enabled_param $1"
+	else
+		disabled_param="$disabled_param $1"
+	fi
+	], [
+		disabled_param="$disabled_param $1"
+		$1=no
+	]])
+
+dnl 
+dnl used for seting rip default on
+dnl
+AC_DEFUN(LOCAL_DEF_RIPON, [
+	if test $enableval = no; then
+		AC_DEFINE(RIP_DEFAULT_OFF)
+	fi
+	])
+
+dnl
+dnl  This is where we set diffrent tools to be used to
+dnl  build GateD
+dnl
+AC_ARG_WITH(cc, [  --with-cc=CC            Set a diffrent compiler for building.
+			    Same as setting CC enviroment variable.],
+			[
+			if test $with_cc = yes -o $with_cc = no; then
+				echo "usage:  --with-cc=/PATH/CC"
+				exit 1
+			fi
+			CC=$with_cc
+			])
+
+AC_ARG_WITH(cflags, [  --with-cflags=flags     Set flags to use with C compiler.
+			    flags = list of flags.
+			    Same as setting CFLAGS enviroment variable.],
+			[
+			if test $with_cflags = yes -o $with_cflags = no; then
+				echo "usage:  --with-cflags=flags"
+				exit 1
+			fi
+			CFLAGS=$with_cflags
+			])
+
+AC_ARG_WITH(lex, [  --with-lex=LEX          Set a different lexer for building.
+			    LEX = path and name of lexer.],
+			[
+			if test $with_lex = yes -o $with_lex = no; then
+                                echo "usage:  --with-lex=/PATH/LEX"
+                                exit 1
+                        fi
+                        LEX=$with_lex
+			])
+
+AC_ARG_WITH(yacc, [  --with-yacc=YACC        Set a different yacc for building.
+			    YACC = path and name of lexer.],
+			[
+			if test $with_yacc = yes -o $with_yacc = no; then
+                                echo "usage:  --with-lex=/PATH/YACC"
+                                exit 1
+                        fi
+                        YACC=$with_yacc
+			])
+
+dnl
+dnl  This must be the first AC_ARG_ENABLE
+dnl
+AC_ARG_ENABLE(all, [  --disable-all           Initially disable all features.
+			    This can be used with --enable-* to pick a
+			    smaller set of features more easily. Otherwise
+			    unless otherwise noted all protocols are enabled.],
+			    [
+			    if test $enableval = yes; then
+				echo "no option --enable-all"
+				exit 1
+			    fi ], [
+			    #
+			    # we don't let the user set this to yes
+			    # becuase it really just means don't disable all
+			    #
+			    enable_all=yes
+			    ])
+
+dnl
+dnl core flags
+dnl
+AC_ARG_ENABLE(developer, [  --enable-developer      Enable all compiler warnings (gcc only).
+  --disable-developer     Disable all compiler warnings (default-disabled). ],
+  LOCAL_DEF_DISABLE_PARAM(developer))
+
+AC_ARG_ENABLE(dist, [  --enable-dist           Run for \"make dist\" only.
+  --disable-dist          Don't run for \"make dist\" only. (default). ],
+  LOCAL_DEF_DISABLE_PARAM(dist))
+
+AC_ARG_ENABLE(gii, [  --enable-gii            Enable GII interface.
+  --disable-gii           Disable GII interface. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(gii))
+
+AC_ARG_ENABLE(smux, [  --enable-smux           Enable SMUX/SNMP subagent support.
+  --disable-smux          Disable SNMP with smux subagent support. ],
+  LOCAL_DEF_ENABLE_HOST_FEATURE(smux))
+
+dnl
+dnl rip is special
+dnl
+AC_ARG_ENABLE(rip, [  --enable-rip            Enable RIP protocol.
+  --disable-rip           Disable RIP protocol. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(rip))
+
+AC_ARG_ENABLE(ripon, [  --enable-ripon          Enable RIP protocol active by default. (default)
+  --disable-ripon         Disable RIP protocol active by default.],
+  LOCAL_DEF_RIPON)
+
+dnl
+dnl public and uni 
+dnl
+AC_ARG_ENABLE(inet, [  --enable-inet           Enable INET protocol.
+  --disable-inet          Disable INET protocol. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(inet))
+
+AC_ARG_ENABLE(icmp, [  --enable-icmp           Enable ICMP protocol.
+  --disable-icmp          Disable ICMP protocol. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(icmp))
+
+AC_ARG_ENABLE(rdisc, [  --enable-rdisc          Enable Router Discovery protocol.
+  --disable-rdisc         Disable Router Discovery protocol. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(rdisc))
+
+AC_ARG_ENABLE(slsp, [  --enable-slsp           Enable SLSP protocol.
+  --disable-slsp          Disable SLSP protocol. (default-disabled)],
+  LOCAL_DEF_DISABLE_FEATURE(slsp))
+
+AC_ARG_ENABLE(bgp, [  --enable-bgp            Enable BGP protocol.
+  --disable-bgp           Disable BGP protocol. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(bgp))
+
+AC_ARG_ENABLE(egp, [  --enable-egp            Enable EGP protocol.
+  --disable-egp           Disable EGP protocol. ],
+  LOCAL_DEF_ENABLE_V34_FEATURE(egp))
+
+AC_ARG_ENABLE(ospf, [  --enable-ospf           Enable OSPF protocol.
+  --disable-ospf          Disable OSPF protocol. (default-disabled if non v3.x) ],
+  LOCAL_DEF_ENABLE_V3_FEATURE(ospf))
+
+
+
+
+dnl Checks for programs.
+AC_PROG_AWK
+AC_PROG_YACC
+AC_PROG_CC
+AM_PROG_LEX
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_CPP
+AC_PROG_RANLIB
+AC_PATH_PROGS(kernel, vmunix hp-ux kernel unix netbsd bsd xenix mach dgux syst\
+ arix irix genunix, unknown, /:/kernel:/stand)
+AC_DEFINE_UNQUOTED(KERNEL_FNAME,"$ac_cv_path_kernel")
+
+dnl
+dnl determine how to read passwords 
+dnl
+AC_MSG_CHECKING(type of passwords)
+AC_EGREP_HEADER(getspnam, shadow.h, ac_shad=yes, ac_shad=no) 
+if test $ac_shad = yes; then
+	if test x`uname` = xHP-UX; then
+		AC_MSG_RESULT(hp shadow)
+	else
+		AC_DEFINE(SHADOWPW)
+		AC_MSG_RESULT(shadow)
+	fi
+else
+	AC_MSG_RESULT(non shadow)
+fi
+
+dnl Checks for directories
+AC_CHECK_DIR(PIDDIR, /var/run /etc)
+AC_CHECK_DIR(DUMPDIR, /var/tmp /usr/tmp)
+AC_CHECK_DIR(SBINDIR, /usr/contrib/bin /usr/local/sbin /usr/sbin /sbin \
+ /usr/local/etc /usr/etc /etc)
+AC_CHECK_DIR(IPV6_NETINET6, /usr/include/netinet6)
+
+dnl Checks for libraries.
+AC_CHECK_LIB(resolv, res_query)
+AC_CHECK_LIB(resolv, inet_aton)
+AC_CHECK_LIB(m, ceil)
+
+dnl Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(bstring.h fcntl.h nlist.h stdlib.h inet/ip.h inet/led.h inet/mib2.h \
+ kvm.h malloc.h arpa/inet.h inet/nd.h net/if.h net/if_dl.h netinet/if_ether.h \
+ net/if_arp.h net/if_var.h netinet/in_systm.h netinet/in_var.h netinet/in.h \
+ netinet/ip_mroute.h netinet/ip_var.h netinet/tcpip.h netinet/udp_var.h \
+ netinet/icmp6.h \
+ netiso/iso.h paths.h string.h streams/nd.h sys/dlpi.h sys/dlpi_ext.h sys/cdefs.h sys/dmap.h \
+ sys/file.h sys/ioctl.h sys/mbuf.h sys/mman.h sys/proc.h sys/queue.h sys/sockio.h \
+ sys/stropts.h sys/sysinfo.h sys/systeminfo.h sys/time.h sys/vm.h syslog.h \
+ unistd.h xti.h)
+
+AC_CHECK_HEADER(paths.h, AC_DEFINE(HAVE_PATHS_H))
+
+dnl
+dnl Check for a way to calculate dependencies.
+dnl
+MKDEP_FILE="$srcdir/util/make-depend"
+AC_MSG_CHECKING(how to calculate deps)
+if test $ac_cv_prog_CC = gcc; then
+	dnl
+	dnl use gcc if it's there
+	dnl
+	MKDEP="\$(top_srcdir)/util/mkdep"
+elif $CC -V 2>&1 | grep WorkShop > /dev/null; then
+	dnl 
+	dnl checking for sunworkshop
+	dnl
+	MKDEP="\$(top_srcdir)/util/mkdep -flag -xM"
+else
+	dnl
+	dnl use makedepend, mkdep, or canned
+	dnl
+	AC_CHECK_FILE(makedepend,has_makedepend=yes,has_makedepend=no)
+	if test $has_makedepend = yes; then
+		MKDEP="makedepend"
+	else
+		AC_CHECK_FILE(mkdep, has_mkdep=yes,has_mkdep=no)
+		if test $has_mkdep = yes; then
+			MKDEP="mkdep"
+		else
+			MKDEP=""
+			MKDEP_FILE="/dev/null"
+		fi
+	fi
+fi
+AC_MSG_RESULT($MKDEP)
+AC_SUBST(MKDEP)
+AC_SUBST_FILE(MKDEP_FILE)
+
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+AC_C_UNUSED
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_TYPE_PID_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_TYPE_UID_T
+dnl AC_DECL_YYTEXT
+AC_EGREP_HEADER([[[:space:]]]sa_len, sys/socket.h,  AC_DEFINE(USE_SOCKLEN))
+AC_C_BIGENDIAN
+AC_CHECK_SIZEOF(long, 4)
+AC_CHECK_SIZEOF(int, 4)
+if test -f /dev/nit; then
+   AC_DEFINE(HAVE_DEV_NIT)
+   AC_CACHE_VAL(ac_cv_file_dev_nit, [ac_cv_file_dev_nit=yes])
+fi
+
+AC_MSG_CHECKING([for __P in sys/cdefs.h])
+AC_CACHE_VAL(ac_cv_sys_cdefs_h_has_P,
+[ AC_EGREP_CPP(xxxyesxxx,
+[
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+#ifdef __P
+xxxyesxxx
+#endif
+], ac_cv_sys_cdefs_h_has_P=yes, ac_cv_sys_cdefs_h_has_P=no)])
+AC_MSG_RESULT($ac_cv_sys_cdefs_h_has_P)
+if test $ac_cv_sys_cdefs_h_has_P = yes; then
+  AC_DEFINE(SYS_CDEFS_DEFINES___P)
+fi
+
+
+dnl AIX keeps in_addr_t in /usr/include/netinet/in.h
+AC_MSG_CHECKING(for in_addr_t)
+AC_CACHE_VAL(ac_cv_type_$1,
+[AC_EGREP_CPP(dnl
+changequote(<<,>>)dnl
+<<in_addr_t[^a-zA-Z_0-9]>>dnl
+changequote([,]), [#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif], ac_cv_type_in_addr_t=yes, ac_cv_type_in_addr_t=no)])dnl
+
+AC_MSG_RESULT($ac_cv_type_in_addr_t)
+if test $ac_cv_type_in_addr_t = no; then
+  AC_DEFINE(in_addr_t, u_int)
+fi
+
+dnl ipaddr_t is defined in SunOS 5.7
+AC_MSG_CHECKING(for ipaddr_t)
+AC_CACHE_VAL(ac_cv_type_$1,
+[AC_EGREP_CPP(dnl
+changequote(<<,>>)dnl
+<<ipaddr_t[^a-zA-Z_0-9]>>dnl
+changequote([,]), [#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif], ac_cv_type_ipaddr_t=yes, ac_cv_type_ipaddr_t=no)])dnl
+AC_MSG_RESULT($ac_cv_type_ipaddr_t)
+if test $ac_cv_type_ipaddr_t = yes; then
+  AC_DEFINE(HAVE_IPADDR_T)
+fi
+
+AC_MSG_CHECKING(if we can use ioctl() to manipulate the routing table)
+AC_EGREP_CPP(wooj,
+[#define _INCLUDE_HPUX_SOURCE
+ #include <sys/sockio.h>
+ #include <sys/ioctl.h>
+ #ifdef SIOCADDRT
+  wooj
+ #endif
+], ac_cv_have_rt_ioctl=yes, ac_cv_have_rt_ioctl=no)
+AC_MSG_RESULT($ac_cv_have_rt_ioctl)
+if test $ac_cv_have_rt_ioctl = yes -a $ac_cv_header_sys_sockio.h = yes; then
+  AC_DEFINE(HAVE_RT_IOCTL)
+fi
+
+dnl
+dnl  See if we are using nontypical OSes.
+dnl
+AC_MSG_CHECKING(for special os's)
+uname_r=`uname -r`
+uname_s=`uname -s`
+uname_rbase=`uname -r | cut -f1 -d'.'`
+hp_ux_102=no
+hp_ux_110=no
+linux=no
+digital_unix=no
+sunos_4=no
+
+
+if test x$uname_s = xHP-UX -a x$uname_r = xB.10.20; then
+	hp_ux_102=yes
+	AC_MSG_RESULT($uname_s $uname_r)
+elif test x$uname_s = xHP-UX -a x$uname_r = xB.11.00; then
+	hp_ux_110=yes
+	AC_MSG_RESULT($uname_s $uname_r)
+elif test x$uname_s = xOSF1 -a x$uname_r = xV4.0; then
+	digital_unix=yes
+	AC_MSG_RESULT($uname_s $uname_r)
+elif test x$uname_s = xSunOS -a x$uname_rbase = x4; then
+	sunos_4=yes
+	AC_MSG_RESULT($uname_s $uname_rbase)
+elif test x$uname_s = xLinux; then
+	linux=yes
+	AC_MSG_RESULT($uname_s $uname_r)
+else
+	AC_MSG_RESULT(no)
+
+fi
+
+dnl
+dnl SunOS 4x needs typedef in str.h
+dnl
+if test $sunos_4 = yes; then
+	AC_DEFINE(HAVE_SUNOS4)
+fi
+
+dnl
+dnl HP-UX does not like the _environ check (it fails)
+dnl
+if test $hp_ux_110=yes -o $hp_ux_102=yes; then
+	AC_DEFINE_UNQUOTED(ENVIRON, _environ)
+fi
+
+
+dnl
+dnl test for rtnetlink
+dnl 
+netlink=no
+if test $linux = yes; then
+	AC_MSG_CHECKING(for rtnetlink.h)
+	if test -e /usr/include/linux/rtnetlink.h; then
+		netlink=yes
+		AC_DEFINE(HAVE_NETLINK)
+		AC_MSG_RESULT(found)
+	else
+		AC_MSG_RESULT(not found)
+	fi
+fi
+
+dnl determine if KERNEL or _KERNEL need to be defined for
+dnl ip_mroute.h
+AC_MSG_CHECKING(if ip_mroute.h hides struct igmpmsg in KERNEL defines) 
+AC_EGREP_CPP(wooj,
+[#include <netinet/ip_mroute.h>
+ #ifdef IGMPMSG_NOCACHE
+  wooj
+ #endif
+],
+ac_cv_ip_mroute_need_kernel="no", ac_cv_ip_mroute_need_kernel="unknown")
+
+if test $ac_cv_ip_mroute_need_kernel = unknown; then
+  AC_EGREP_CPP(wooj,
+  [#define KERNEL
+   #define _KERNEL
+   #include <netinet/ip_mroute.h>
+   #ifdef IGMPMSG_NOCACHE
+    wooj
+   #endif
+  ],
+  ac_cv_ip_mroute_need_kernel=kernel,)
+fi		
+
+AC_MSG_RESULT($ac_cv_ip_mroute_need_kernel)
+if test $ac_cv_ip_mroute_need_kernel != no; then
+  AC_DEFINE(INCLUDE_MROUTE_KERNEL)
+fi
+
+dnl Checks for structure fields.
+AC_EGREP_HEADER(if_xname, net/if.h,  AC_DEFINE(USE_XNAME))
+AC_EGREP_HEADER(if_addrlist, net/if.h,  ac_cv_use_if_addrlist=yes, ac_cv_use_if_addrlist=no)
+AC_EGREP_HEADER(if_addrhead, net/if_var.h, ac_cv_use_if_addrhead=yes, ac_cv_use_if_addrhead=no)
+AC_EGREP_HEADER(ia_list, netinet/in_var.h, ac_cv_use_ia_list=yes, ac_cv_use_ia_list=no)
+AC_EGREP_HEADER(ia_link, netinet/in_var.h, ac_cv_use_ia_link=yes, ac_cv_use_ia_link=no)
+AC_EGREP_HEADER(if_list, net/if.h, ac_cv_use_if_list=yes, ac_cv_use_if_list=no)
+AC_EGREP_HEADER(if_link, net/if_var.h, ac_cv_use_if_link=yes, ac_cv_use_if_link=no)
+AC_EGREP_HEADER(arpcom, netinet/if_ether.h,  AC_DEFINE(USE_ARPCOM))
+AC_EGREP_HEADER(radix_node_head, net/route.h, ac_cv_have_radix_node_head=yes, ac_cv_have_radix_node_head=no)
+AC_EGREP_HEADER(h_errlist, netdb.h, AC_DEFINE(HAVE_H_ERRLIST))
+AC_EGREP_HEADER(ifr_mtu, net/if.h, AC_DEFINE(HAVE_IFR_MTU))
+AC_EGREP_HEADER(inm_next, netinet/in_var.h, AC_DEFINE(USE_INM_NEXT))
+AC_EGREP_HEADER(in_multi, netinet/in_var.h, AC_DEFINE(HAVE_IN_MULTI))
+if test $linux != yes; then
+   AC_EGREP_HEADER(msg_control, sys/socket.h,  AC_DEFINE(USE_MSGHDR_CONTROLFIELDS))
+fi
+AC_EGREP_HEADER([[[:space:]]]sa_len, sys/socket.h,  AC_DEFINE(USE_SOCKLEN))
+AC_EGREP_HEADER(inm_list, netinet/in_var.h,  AC_DEFINE(USE_INM_LIST))
+AC_EGREP_HEADER(setlinebuf, stdio.h, AC_DEFINE(HAVE_SETLINEBUF))
+AC_EGREP_HEADER(if_multiaddrs, net/if_var.h, AC_DEFINE(MULTIADDRS_ON_IFNET))
+AC_EGREP_HEADER(ia_subnetmask, netinet/in_var.h, AC_DEFINE(USE_IA_SUBNETMASK))
+AC_EGREP_HEADER(icmp6_mld, netinet/icmp6.h, AC_DEFINE(HAVE_ICMP6_MLD))
+AC_EGREP_HEADER(CMSG_SPACE, sys/socket.h, AC_DEFINE(HAVE_CMSG_SPACE))
+AC_EGREP_HEADER(ICMPV6_PACKET_TOOBIG, netinet/icmp6.h, AC_DEFINE(HAVE_ICMPV6_DEST_UNREACH))
+AC_EGREP_HEADER(redirect_destination, netinet/icmp6.h, AC_DEFINE(HAVE_REDIRECT_DESTINATION))
+AC_EGREP_HEADER(ifm_data, net/if.h, AC_DEFINE(HAVE_IFM_DATA))
+AC_EGREP_HEADER(icmpv6, netinet/ip6_icmp.h, AC_DEFINE(HAVE_ICMPV6_STRUCTURE))
+
+dnl
+dnl Some radix_node_heads are not appropriate for krt_rtread_radix
+dnl
+if test $ac_cv_have_radix_node_head = yes; then
+    AC_DEFINE(HAVE_RADIX_NODE_HEAD)
+    AC_MSG_CHECKING(if radix_node_head has usable fields for krt_rtread_radix)
+    AC_EGREP_HEADER(rnh_next, net/route.h, ac_cv_radix_usable=yes, ac_cv_radix_usable=no)
+    AC_MSG_RESULT($ac_cv_radix_usable)
+    if test $ac_cv_radix_usable = yes; then
+        AC_DEFINE(RADIX_HEAD_USABLE)
+    fi
+else
+    ac_cv_radix_usable=no
+fi
+
+dnl
+dnl See if any of if_addrlist, if_addrhead, ia_list, ia_link, if_list,
+dnl if_link are tailq's.
+dnl
+if test $ac_cv_use_if_addrlist = yes; then
+    AC_MSG_CHECKING(if if_addrlist is a TAILQ_ENTRY)
+    AC_EGREP_CPP(wooj,
+    [#include <net/if.h>
+    #ifdef TAILQ_ENTRY /* assume if TAILQ_ENTRY is defined, we're using it */
+    wooj
+    #endif], [ AC_DEFINE(USE_IF_ADDRLIST_TAILQ) AC_MSG_RESULT(yes) ],
+    AC_MSG_RESULT(no))
+else if test $ac_cv_use_if_addrhead = yes; then
+    AC_MSG_CHECKING(if if_addrhead is a TAILQ_ENTRY)
+    AC_EGREP_CPP(wooj,
+    [#include <net/if_var.h>
+    #ifdef TAILQ_ENTRY /* assume if TAILQ_ENTRY is defined, we're using it */
+    wooj
+    #endif], [ AC_DEFINE(USE_IF_ADDRHEAD_TAILQ) AC_MSG_RESULT(yes) ], 
+    AC_MSG_RESULT(no))
+fi
+fi
+
+if test $ac_cv_use_ia_list = yes; then
+    AC_MSG_CHECKING(if ia_list is a TAILQ_ENTRY)
+    AC_EGREP_CPP(wooj,
+    [#include <netinet/in_var.h>
+    #ifdef TAILQ_ENTRY /* assume if TAILQ_ENTRY is defined, we're using it */
+    wooj
+    #endif], [ AC_DEFINE(USE_IA_LIST_TAILQ) AC_MSG_RESULT(yes) ],
+    AC_MSG_RESULT(no))
+else if test $ac_cv_use_ia_link = yes; then
+    AC_MSG_CHECKING(if ia_link is a TAILQ_ENTRY)
+    AC_EGREP_CPP(wooj,
+    [#include <netinet/in_var.h>
+    #ifdef TAILQ_ENTRY /* assume if TAILQ_ENTRY is defined, we're using it */
+    wooj
+    #endif], [ AC_DEFINE(USE_IA_LINK_TAILQ) AC_MSG_RESULT(yes) ],
+    AC_MSG_RESULT(no))
+fi
+fi
+
+if test $ac_cv_use_if_list = yes; then
+    AC_MSG_CHECKING(if if_list is a TAILQ_ENTRY)
+    AC_EGREP_CPP(wooj,
+    [#include <net/if.h>
+    #ifdef TAILQ_ENTRY /* assume if TAILQ_ENTRY is defined, we're using it */
+    wooj
+    #endif], [ AC_DEFINE(USE_IF_LIST_TAILQ) AC_MSG_RESULT(yes) ],
+    AC_MSG_RESULT(no))
+else if test $ac_cv_use_if_link = yes; then
+    AC_MSG_CHECKING(if if_link is a TAILQ_ENTRY)
+    AC_EGREP_CPP(wooj,
+    [#include <net/if_var.h>
+    #ifdef TAILQ_ENTRY /* assume if TAILQ_ENTRY is defined, we're using it */
+    wooj
+    #endif], [ AC_DEFINE(USE_IF_LINK_TAILQ) AC_MSG_RESULT(yes) ],
+    AC_MSG_RESULT(no))
+fi
+fi
+
+dnl Check for some defines
+AC_CHECK_HEADER_DEFINE(IP_MULTICAST_IF, netinet/in.h, AC_DEFINE(IP_MULTICAST))
+if test $ac_cv_hdr_IP_MULTICAST_IF = yes; then
+	ip_multicast=yes
+else
+	ip_multicast=no
+fi
+dnl
+dnl Determine the krt scoket type and arguments
+dnl
+AC_CHECK_HEADER_DEFINE(PF_ROUTE, sys/socket.h, AC_DEFINE(HAVE_RT_SOCK))
+if test $ac_cv_hdr_PF_ROUTE = yes -a $linux != yes; then
+	krt_os_objs="$krt_os_objs krt_rt_sock.o"
+	AC_DEFINE(KRT_RT_SOCK)
+	AC_DEFINE(KRT_SOCKET_TYPE,[PF_ROUTE,SOCK_RAW,AF_UNSPEC])
+elif test $netlink = yes; then
+	krt_os_objs="$krt_os_objs krt_rt_netlink.o"
+	AC_DEFINE(KRT_RT_NETLINK)
+	AC_DEFINE(KRT_SOCKET_TYPE,[PF_ROUTE,SOCK_RAW,AF_UNSPEC])
+elif test $ac_cv_have_rt_ioctl = yes; then
+	krt_os_objs="$krt_os_objs krt_rt_ioctl.o"
+	AC_DEFINE(KRT_RT_IOCTL)
+	AC_DEFINE(KRT_SOCKET_TYPE,[PF_INET,SOCK_DGRAM,AF_UNSPEC])
+else
+	:
+fi
+AC_CHECK_HEADER_DEFINE(AF_LINK, sys/socket.h, AC_DEFINE(SOCKADDR_DL))
+AC_CHECK_HEADER_DEFINE(inm_next, netinet/in_var.h, AC_DEFINE(USE_INM_NEXT))
+AC_CHECK_HEADER_DEFINE(IRE_DEFAULT, inet/ip.h, AC_DEFINE(USE_IRE_DEFAULT))
+AC_CHECK_HEADER_DEFINE(SIOCGIFHWADDR, sys/socketio.h, AC_DEFINE(HAVE_SIOCGIFHWADDR))
+AC_CHECK_HEADER_DEFINE(DL_HP_PPA_ACK, sys/dlpi_ext.h, AC_DEFINE(HAVE_DL_HP_PPA_ACK))
+AC_CHECK_HEADER_DEFINE(MAP_ANON, sys/mman.h, AC_DEFINE(HAVE_MAP_ANON))
+AC_CHECK_HEADER_DEFINE(AF_INET6, sys/socket.h, :)
+AC_CHECK_HEADER_DEFINE(AF_INET6, sys-dist/socket.h, :)
+
+dnl Checks for library functions.
+AC_FUNC_ALLOCA
+AC_TYPE_GETGROUPS
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_SETVBUF_REVERSED
+AC_TYPE_SIGNAL
+AC_FUNC_VPRINTF
+
+
+LIBS="$LIBS -L/usr/local/v6/lib";
+dnl
+dnl check for libraries before we actually check for the functions
+dnl
+AC_CHECK_FUNC(crypt, AC_DEFINE(HAVE_CRYPT))
+if test $ac_cv_func_crypt = no; then
+   # crypt is not in the default libraries.  See if it's in some other.
+   for lib in crypt; do
+      AC_CHECK_LIB($lib, crypt, [AC_DEFINE(HAVE_CRYPT)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+
+dnl
+dnl check for inet_ntoa()
+dnl
+AC_CHECK_FUNC(inet_ntoa, AC_DEFINE(HAVE_INET_NTOA))
+if test $ac_cv_func_inet_ntoa = no; then
+   # inet_ntoa is not in the default libraries.  See if it's in some other.
+   for lib in xnet nsl socket bsd inet c_s; do
+      AC_CHECK_LIB($lib, inet_ntoa, [AC_DEFINE(HAVE_INET_NTOA)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+
+dnl
+dnl check for socket() first so we can find libxnet if present
+dnl
+AC_CHECK_FUNC(socket, AC_DEFINE(HAVE_SOCKET))
+if test $ac_cv_func_socket = no; then
+   # socket is not in the default libraries.  See if it's in some other.
+   for lib in xnet socket bsd inet c_s; do
+      AC_CHECK_LIB($lib, socket, [AC_DEFINE(HAVE_SOCKET)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+
+AC_CHECK_FUNC(if_nametoindex, AC_DEFINE(HAVE_IFNAMETOINDEX))
+if test $ac_cv_func_if_nametoindex = no; then
+   # if_nametoindex is not in the default libraries.  See if it's in some other.
+   for lib in socket inet6; do
+      AC_CHECK_LIB($lib, if_nametoindex, [AC_DEFINE(HAVE_IFNAMETOINDEX)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+AC_CHECK_FUNC(getipnodebyname, AC_DEFINE(HAVE_GETIPNODEBYNAME))
+if test $ac_cv_func_getipnodebyname = no; then
+   # getipnodebyname is not in the default libraries.  See if it's in some other.
+   for lib in socket inet6; do
+      AC_CHECK_LIB($lib, getipnodebyname, [AC_DEFINE(HAVE_GETIPNODEBYNAME)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+
+dnl
+dnl now check for gethostbyname() so we find nsl 
+dnl this should not happen if xnet was found
+dnl
+AC_CHECK_FUNC(gethostbyname, AC_DEFINE(HAVE_GETHOSTBYNAME))
+if test $ac_cv_func_gethostbyname = no; then
+   # gethostbyname is not in the default libraries.  See if it's in some other.
+   for lib in nsl bsd socket inet; do
+      AC_CHECK_LIB($lib, gethostbyname, [AC_DEFINE(HAVE_GETHOSTBYNAME)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+AC_CHECK_FUNC(kstat_open, AC_DEFINE(HAVE_KSTAT_OPEN))
+if test $ac_cv_func_kstat_open = no; then
+   # kstat_open is not in the default libraries.  See if it's in some other.
+   for lib in kstat; do
+      AC_CHECK_LIB($lib, kstat_open, [AC_DEFINE(HAVE_KSTAT_OPEN)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+AC_CHECK_FUNC(kvm_open, AC_DEFINE(HAVE_KVM_OPEN))
+if test $ac_cv_func_kvm_open = no; then
+   # kvm_open is not in the default libraries.  See if it's in some other.
+   for lib in kvm; do
+      AC_CHECK_LIB($lib, kvm_open, [AC_DEFINE(HAVE_KVM_OPEN)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+AC_CHECK_FUNC(nlist, AC_DEFINE(HAVE_NLIST))
+if test $ac_cv_func_nlist = no; then
+   # nlist is not in the default libraries.  See if it's in some other.
+   for lib in elf mld; do
+      AC_CHECK_LIB($lib, nlist, [AC_DEFINE(HAVE_NLIST)
+        LIBS="$LIBS -l$lib"; break])
+   done
+fi
+
+
+dnl
+dnl now that we have all the needed libraries check for the rest of the
+dnl funcitons
+dnl
+
+AC_CHECK_FUNCS(assert bcmp bcopy bzero flock getkerninfo \
+ getspnam gettimeofday getcwd index lrand48 memmove \
+ memcpy mmap random select sendmsg setenv setsid strchr strdup \
+ sterror sysctl sysinfo tzsetwall waitpid)
+
+mkdir -p src/gated
+AC_SYS_SIGNAME(src/gated/signames.h)
+AC_VERSION_INFO
+
+dnl
+dnl HP-UX needs special environ handling
+dnl
+if test $hp_ux_110 = no -a $hp_ux_102 = no; then
+	AC_CHOOSE_FUNC(ENVIRON, environ _environ)
+fi
+
+AC_REPLACE_FUNCS(ffs flock kvm inet_aton setvbuf strcasecmp strerror\
+ sysconf unsetenv)
+
+dnl Check which header has bcopy
+if test $ac_cv_func_bcopy != yes; then
+   if test $ac_cv_header_string_h = yes; then
+      AC_EGREP_HEADER(bcopy, string.h, ac_cv_func_bcopy=yes)
+   fi
+   if test $ac_cv_func_bcopy != yes; then
+      if test $ac_cv_header_bstring_h = yes; then
+         AC_EGREP_HEADER(bcopy, bstring.h, ac_cv_func_bcopy=yes)
+      fi
+   fi
+   if test $ac_cv_func_bcopy = yes; then
+      AC_DEFINE(HAVE_BCOPY)
+   fi
+fi
+
+dnl Check which header has bzero
+if test $ac_cv_func_bzero != yes; then
+   if test $ac_cv_header_string_h = yes; then
+      AC_EGREP_HEADER(bzero, string.h, ac_cv_func_bzero=yes)
+   fi
+   if test $ac_cv_func_bzero != yes; then
+      if test $ac_cv_header_bstring_h = yes; then
+         AC_EGREP_HEADER(bzero, bstring.h, ac_cv_func_bzero=yes)
+      fi
+   fi
+   if test $ac_cv_func_bzero = yes; then
+      AC_DEFINE(HAVE_BZERO)
+   fi
+fi
+
+dnl Check which header has bcmp
+if test $ac_cv_func_bcmp != yes; then
+   if test $ac_cv_header_string_h = yes; then
+      AC_EGREP_HEADER(bcmp, string.h, ac_cv_func_bcmp=yes)
+   fi
+   if test $ac_cv_func_bcmp != yes; then
+      if test $ac_cv_header_bstring_h = yes; then
+         AC_EGREP_HEADER(bcmp, bstring.h, ac_cv_func_bcmp=yes)
+      fi
+   fi
+   if test $ac_cv_func_bcmp = yes; then
+      AC_DEFINE(HAVE_BCMP)
+   fi
+fi
+
+dnl
+dnl Check for Solaris XPG4 support
+dnl 
+AC_MSG_CHECKING(for Solaris XPG4 support)
+if test -f /usr/lib/libxnet.so; then
+      CFLAGS="$CFLAGS -D_POSIX_C_SOURCE=199506 -D_XOPEN_SOURCE=500"
+      CFLAGS="$CFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_VERSION=4"
+      CFLAGS="$CFLAGS -D__EXTENSIONS__"
+      LIBS="$LIBS -lnsl -lxnet /usr/ccs/lib/values-xpg4.o"
+			AC_DEFINE(HAVE_XPG4)
+			AC_DEFINE(NO_UINTn_T_DEFINES)
+      AC_MSG_RESULT(yes)
+else
+      AC_MSG_RESULT(no)
+fi
+
+dnl
+dnl Check for AIX support
+dnl
+AC_MSG_CHECKING(for AIX support)
+if test -f /usr/lib/lpd/aixlong; then
+      CFLAGS="$CFLAGS -DINCLUDE_KVM -D_BSD=44 -DINRIA -DV6L1 -DKVM_TYPE_OTHER"
+			LIBS = "$LIBS -lbsd -bloadmap:load.out"
+			AC_DEFINE(HAVE_AIX)
+      AC_MSG_RESULT(yes)
+else
+      AC_MSG_RESULT(no)
+fi
+
+dnl
+dnl Process parameters.
+dnl
+fordist=no
+for i in $enabled_param; do
+	case $i in
+	developer)
+		if test $ac_cv_prog_CC = gcc; then
+			CFLAGS="$CFLAGS -g -Wall -pedantic -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wwrite-strings -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow"
+		fi
+		AC_DEFINE(GII_DEBUG_MENU)
+		;;
+	dist)
+		fordist=yes
+		;;
+	esac
+done
+
+dnl
+dnl Make the list of protocols to build.
+dnl
+AC_MSG_CHECKING(for protocols to use)
+
+dnl
+dnl initial set
+dnl
+new_protocols="PARSE_LINK \
+	"
+
+dnl
+dnl License and machine support checks.
+dnl
+license_v3=no
+license_v4=no
+license_v5=no
+license_v6=no
+LICENSE_DIRS=
+
+if test -d $srcdir/licenses/v3; then
+	license_v3=yes
+	if test $fordist = yes; then
+		LICENSE_DIRS="$LICENSE_DIRS v3"
+	fi
+fi
+
+if test -d $srcdir/licenses/v4; then
+	license_v4=yes
+	if test $fordist = yes; then
+		LICENSE_DIRS="$LICENSE_DIRS v4"
+	fi
+fi
+
+if test -d $srcdir/licenses/v5; then
+	license_v5=yes
+	if test $fordist = yes; then
+		LICENSE_DIRS="$LICENSE_DIRS v5"
+	fi
+fi
+
+if test -d $srcdir/licenses/v6; then
+	license_v6=yes
+	if test $fordist = yes; then
+		LICENSE_DIRS="$LICENSE_DIRS v6"
+	fi
+fi
+
+AC_SUBST(LICENSE_DIRS)
+
+
+#
+#
+# Enable v5/mcast defaults if mcast is supported _and_ there
+# is a v5 license.
+#
+if test $ac_cv_header_netinet_ip_mroute_h = yes -a $license_v5 = yes; then
+	enabled_proto="$enabled_proto $enabled_v5_proto"
+	AC_DEFINE(GATED_MEMBER)
+fi
+
+# Enable v6/ipv6 defaults if ipv6 is supported _and_ there
+# is a v6 license.
+#
+if test $ac_cv_header_netinet_icmp6_h = yes; then
+	have_inet6=yes
+else
+	have_inet6=no
+fi
+
+if test $have_inet6 = yes -a $license_v6 = yes; then
+	enabled_proto="$enabled_proto $enabled_v6_proto"
+	new_protocols="$new_protocols KRT_IPMULTI_V6"
+fi
+
+#
+# Enable v4 defaults if there is a v4 license.
+#
+if test $license_v4 = yes; then
+	enabled_proto="$enabled_proto $enabled_v4_proto"
+	AC_DEFINE(GATED_MEMBER)
+fi
+
+#
+# Enable v3/v4 defaults if there is a v3 or v4 license.
+#
+if test $license_v3 = yes -o $license_v4 = yes; then
+	enabled_proto="$enabled_proto $enabled_v34_proto"
+fi
+
+#
+# Enable v3 defaults if there is a v3 license.
+#
+if test $license_v3 = yes; then
+	enabled_proto="$enabled_proto $enabled_v3_proto"
+	AC_DEFINE(GATED_PUBLIC)
+fi
+
+#
+# Enable ISO if the machine supports it _and_ there is
+# a v4 license.
+#
+if test $ac_cv_header_netiso_iso_h = yes -a $license_v4 = yes; then
+	enabled_proto="$enabled_proto $enabled_iso_proto"
+fi
+
+#
+# Enable host protocols.
+# (maybe more checks here in the future)
+#
+enabled_proto="$enabled_proto $enabled_host_proto"
+
+#
+# if general mcast is supported compile krt module
+#
+if test $ip_multicast = yes; then
+	new_protocols="$new_protocols KRT_IPMULTI_TTL0"
+fi
+
+#
+# If there is only a v5 license, enable RIP because this
+# is the only way it's distributed.
+#
+if test $license_v3 = no -a $license_v4 = no -a $license_v5 = yes; then
+	enabled_proto="$enabled_proto rip"
+fi
+
+for i in $enabled_proto; do
+	i=`echo PROTO_${i} | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`;
+	new_protocols="$new_protocols $i"
+done    
+
+# add a space to make grep work
+new_protocols="$new_protocols "
+
+# add in dependencies, loop until no change
+test_proto_change=
+while test X"$test_proto_change" != X"$new_protocols"; do
+
+	test_proto_change="$new_protocols"
+
+	for i in $new_protocols; do
+		case $i in
+		PROTO_BGMP)
+			protodeps="IP_MULTICAST_ROUTING PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_BGP)
+			protodeps="AUTONOMOUS_SYSTEM PROTO_ASPATHS ROUTER_ID PROTO_INET"
+			protomutex=""
+			;;
+    PROTO_BGP4MP)
+      protodeps="IPV6_ROUTING AUTONOMOUS_SYSTEM PROTO_BGP ROUTER_ID PROTO_INET PROTO_INET6 PROTO_MLD6"
+      protomutex=""
+      ;;
+		PROTO_EGP)
+			protodeps="AUTONOMOUS_SYSTEM PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_DVMRP)
+			protodeps="PROTO_DVMRP_ROUTING IP_MULTICAST_ROUTING"
+			protomutex=""
+			;;
+		PROTO_DVMRP_ROUTING)
+			protodeps="PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_HELLO) 
+			protodeps="PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_ICMP) 
+			protodeps="PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_ICMPV6)
+			protodeps="IPV6_ROUTING PROTO_INET PROTO_INET6 PROTO_MLD6"
+			protomutex=""
+			;;
+		PROTO_IGMP) 
+			protodeps="IP_MULTICAST_ROUTING PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_INET)
+			protodeps=""
+			protomutex=""
+			;;
+		PROTO_INET6)
+			protodeps=""
+			protomutex=""
+			;;
+		PROTO_ISIS) 
+			protodeps="FLETCHER_CHECKSUM PROTO_INET PROTO_ISO"
+			protomutex=""
+			;;
+		PROTO_ISIS2) 
+			protodeps="FLETCHER_CHECKSUM PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_OSPF) 
+			protodeps="PROTO_OSPF_EITHER FLETCHER_CHECKSUM ROUTER_ID MD5_CHECKSUM PROTO_INET PROTO_ASPATHS AUTONOMOUS_SYSTEM"
+			protomutex="PROTO_OSPF2"
+			;;
+		PROTO_OSPF2) 
+			protodeps="PROTO_OSPF_EITHER FLETCHER_CHECKSUM MD5_CHECKSUM ROUTER_ID PROTO_INET NOSPF_NSSA PROTO_ASPATHS"
+			protomutex="PROTO_OSPF"
+			;;
+		PROTO_PIM) 
+			protodeps="IP_MULTICAST_ROUTING PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_PIMSM) 
+			protodeps="PROTO_PIM"
+			protomutex=""
+			;;
+		PROTO_PIMDM) 
+			protodeps="PROTO_PIM"
+			protomutex=""
+			;;
+		PROTO_MPBGP)
+			protodeps="PROTO_BGP AUTONOMOUS_SYSTEM PROTO_ASPATHS ROUTER_ID RUSTY"
+			protomutex=""
+			;;
+		PROTO_MSDP) 
+			protodeps="PROTO_PIMSM"
+			protomutex=""
+			;;
+		PROTO_RDISC)
+			protodeps="RDISC_SERVER RDISC_CLIENT"
+			protomutex=""
+			;;
+		RDISC_SERVER)
+			protodeps="ICMP_SEND PROTO_ICMP"
+			protomutex=""
+			;;
+		RDISC_CLIENT)
+			protodeps="ICMP_SEND PROTO_ICMP"
+			protomutex=""
+			;;
+		PROTO_RIPNG)
+			protodeps="IPV6_ROUTING PROTO_INET PROTO_INET6 PROTO_MLD6"
+			protomutex=""
+			;;
+		PROTO_RIP)
+			protodeps="MD5_CHECKSUM PROTO_INET"
+			protomutex=""
+			;;
+		PROTO_SLSP)
+			protodeps="FLETCHER_CHECKSUM"
+			protomutex=""
+			;;
+		PROTO_SMUX)
+			protodeps="PROTO_SNMP PARSE_PORT PROTO_INET"
+			;;
+		PROTO_RSD)
+			protodeps="EXTENDED_RIBS"
+			protomutex=""
+			;;
+		*)
+			protodeps=""
+			protomutex=""
+			;;
+		esac
+
+		for j in $protodeps; do
+			if echo $new_protocols | grep "$j " > /dev/null; then
+				:
+			else
+				new_protocols="$new_protocols $j"
+				new_protocols="$new_protocols "
+			fi
+		done
+
+		for m in $protomutex; do
+			if echo $new_protocols | grep "$m " > /dev/null; then
+				echo ""
+				echo "error:  $m cannot be used with $i"
+				exit
+			fi
+		done
+	done
+done
+
+new_protocols=`echo $new_protocols | sed -e 's/[ ]$//'`
+
+
+#
+#create a file so we can sort it
+#
+echo "" > /tmp/$$.acs
+for i in $new_protocols; do
+	if echo $i | grep "PROTO_PIMX" > /dev/null; then
+		echo "PROTO_PIM" >> /tmp/$$.acs
+	else
+		echo $i >> /tmp/$$.acs
+	fi
+done
+new_protocols=`cat /tmp/$$.acs | sort -u`
+rm -f /tmp/$$.acs
+
+dnl
+dnl now build the list of objects we need to build
+dnl 
+dnl
+dnl When adding protocols the objects should be added below
+dnl
+
+SNMPLIB=
+SNMPDLIB=
+MCORE=
+smux_module=
+
+modules="krt krt_os"
+for i in $new_protocols; do
+	case $i in
+	IP_MULTICAST_ROUTING)
+		if test $ac_cv_header_netinet_ip_mroute_h = no; then
+			echo "multicast routing protocol[s] requested, but multicast routing not supported by OS"
+			exit 1
+		fi
+		MCORE=mcore
+		;;
+	KRT_IPMULTI_TTL0)
+		modules="$modules krt_multi"
+		;;
+	IPV6_ROUTING)
+		if test $have_inet6 = no; then
+		echo "ipv6 routing protocol[s] requested, but ipv6 routing not supported by OS"
+		exit 1
+		fi
+		;; 
+	PROTO_MPASPATHS)
+		modules="$modules mpaspath"
+		;;
+	PROTO_ASPATHS)
+		modules="$modules aspath"
+		;;
+	PROTO_BGMP)
+		modules="$modules bgmp"
+		;;
+	PROTO_BGP)
+		modules="$modules bgp"
+		;;
+	PROTO_BGP4MP)
+		modules="$modules bgp4mp"
+		;;
+	PROTO_CMU_SNMP)
+		SNMPLIB=snmplib
+		SNMPLIB_LDADD="-L../snmplib -lsnmplib"
+		SNMPDLIB=snmpdlib
+		SNMPDLIB_LDADD="-L../snmpdlib -lsnmpdlib"
+		modules="$modules snmp_cmu"
+		AC_DEFINE(MIB_RIP)
+		;;
+	PROTO_DVMRP)
+		modules="$modules dvmrp"
+		;;
+	PROTO_DVMRP_ROUTING)
+		modules="$modules dvmrp_routing"
+		;;
+	PROTO_EGP)
+		modules="$modules egp"
+		;;
+	PROTO_GII)
+		modules="$modules gii"
+		;;
+	PROTO_ICMP) 
+		modules="$modules icmp"
+		;;
+	PROTO_MLD6)
+dnl    modules="mld6 $modules"
+		;;
+	KRT_IPMULTI_V6)
+		modules="krt_ipv6multi $modules"
+		;;
+		PROTO_ICMPV6)
+		modules="icmpv6 mld6 $modules"
+		;;
+	PROTO_IGMP) 
+		modules="$modules igmp"
+		;;
+	PROTO_INET)
+		modules="$modules inet"
+		;;
+	PROTO_INET6)
+		modules="$modules inet6"
+		;;
+	PROTO_ISIS)
+		modules="$modules isis"
+		;;
+	PROTO_ISIS2) 
+		modules="$modules new_isis"
+		;;
+	PROTO_ISO)
+		modules="$modules iso"
+		;;
+	PROTO_MPBGP)
+		modules="$modules mpbgp"
+		;;
+	PROTO_MSDP) 
+		modules="$modules msdp"
+		;;
+	PROTO_OSPF) 
+		OSPF_MONITOR=ospf_monitor
+		modules="$modules ospf"
+		;;
+	PROTO_OSPF2) 
+		OSPF_MONITOR=ospf_monitor
+		modules="$modules new_ospf"
+		;;
+	PROTO_PIM) 
+		modules="$modules pim"
+		;;
+	PROTO_PIMDM) 
+		modules="$modules pimdm"
+		;;
+	PROTO_PIMSM) 
+		modules="$modules pimsm"
+		;;
+	PROTO_RDISC)
+		modules="$modules rdisc"
+		;;
+	PROTO_RIP)
+		RIPQUERY=ripquery
+		modules="$modules rip"
+		;;
+	PROTO_RIPNG)
+		RIP6QUERY=rip6query
+		modules="$modules ripng"
+		;;
+	PROTO_SLSP)
+		modules="$modules slsp"
+		;;
+	PROTO_SNMP)
+		;;
+	PROTO_SMUX)
+		smux_module="smux"
+		AC_DEFINE(MIB_RIP)
+		;;
+	PROTO_WRD)
+		modules="$modules wrd"
+		;;
+	*)
+		;;
+	esac
+done
+
+dnl
+dnl the krt symbol decision
+dnl
+# check for proc version for linux
+if test $linux = yes; then
+	krt_os_objs="$krt_os_objs krt_symbols_proc.o"
+	AC_DEFINE(KRT_SYMBOLS_PROC)
+dnl
+dnl XXX HP-UX seems to have the sysinfo
+dnl function in libc, but it is undocumented.
+dnl
+dnl XXX digital unix 4.0 has sysinfo, but it is incompatible
+dnl with krt_symbols_sunos5.c.
+dnl
+elif test $hp_ux_102 = yes -o $hp_ux_110 = yes -o $digital_unix = yes; then
+	krt_os_objs="$krt_os_objs krt_symbols_nlist.o"
+	AC_DEFINE(KRT_SYMBOLS_NLIST)
+elif test $ac_cv_func_sysinfo = yes; then
+	krt_os_objs="$krt_os_objs krt_symbols_sunos5.o"
+	AC_DEFINE(USE_NDD)
+	AC_DEFINE(KRT_SYMBOLS_SUNOS5)
+elif test $ac_cv_func_sysctl = yes; then
+	krt_os_objs="$krt_os_objs krt_symbols_sysctl.o"
+	AC_DEFINE(KRT_SYMBOLS_SYSCTL)
+elif test $ac_cv_func_nlist = yes; then
+	krt_os_objs="$krt_os_objs krt_symbols_nlist.o"
+	AC_DEFINE(KRT_SYMBOLS_NLIST)
+fi
+
+dnl
+dnl the krt rtread decision
+dnl
+if test $netlink = yes; then
+	krt_os_objs="$krt_os_objs krt_rtread_netlink.o"
+	AC_DEFINE(KRT_RTREAD_NETLINK)
+elif test $linux = yes; then
+	krt_os_objs="$krt_os_objs krt_rtread_proc.o"
+	AC_DEFINE(KRT_RTREAD_PROC)
+elif test $ac_cv_func_getkerninfo = yes; then
+	krt_os_objs="$krt_os_objs krt_rtread_kinfo.o"
+	AC_DEFINE(KRT_RTREAD_KINFO)
+elif test $ac_cv_func_sysctl = yes; then
+	krt_os_objs="$krt_os_objs krt_rtread_kinfo.o"
+	AC_DEFINE(KRT_RTREAD_KINFO)
+elif test $ac_cv_radix_usable = yes; then
+	krt_os_objs="$krt_os_objs krt_rtread_radix.o"
+	AC_DEFINE(KRT_RTREAD_RADIX)
+elif test $ac_cv_header_sys_mbuf_h = yes; then
+	krt_os_objs="$krt_os_objs krt_rtread_kmem.o"
+	AC_DEFINE(KRT_RTREAD_KMEM)
+else
+	krt_os_objs="$krt_os_objs krt_rtread_sunos5.o"
+	AC_DEFINE(KRT_RTREAD_SUNOS5)
+fi
+
+dnl
+dnl the krt ifread decision
+dnl
+if test $netlink = yes; then
+	krt_os_objs="$krt_os_objs krt_ifread_netlink.o"
+	AC_DEFINE(KRT_IFREAD_NETLINK)
+elif test $linux = yes; then
+	krt_os_objs="$krt_os_objs krt_ifread_ioctl.o"
+	AC_DEFINE(KRT_IFREAD_IOCTL)
+elif test $ac_cv_func_getkerninfo = yes; then
+	AC_DEFINE(KRT_IFREAD_KINFO)
+	krt_os_objs="$krt_os_objs krt_ifread_kinfo.o"
+elif test $ac_cv_func_sysctl = yes; then
+	AC_DEFINE(KRT_IFREAD_KINFO)
+	krt_os_objs="$krt_os_objs krt_ifread_kinfo.o"
+elif test $hp_ux_102 = yes; then
+	AC_DEFINE(KRT_IFREAD_COMBO)
+	krt_os_objs="$krt_os_objs krt_ifread_combo.o"
+else
+	AC_DEFINE(KRT_IFREAD_IOCTL)
+	krt_os_objs="$krt_os_objs krt_ifread_ioctl.o"
+fi
+
+dnl
+dnl define all protocols for config.h
+dnl
+for i in $new_protocols; do
+	AC_DEFINE_UNQUOTED($i)
+done
+
+dnl
+dnl build options file
+dnl
+echo "# Built automatically by configure, do not edit" > ./src/gated/options
+for i in $new_protocols; do
+       echo "$i" >> ./src/gated/options
+       echo $ac_n " $i$ac_c"
+done
+
+dnl
+dnl Add define for which bgp and aspaths module we are 
+dnl using to options.
+dnl
+if echo $new_protocols | grep "PROTO_BGP " > /dev/null; then
+	if test $license_v3 = yes; then
+		echo "PROTO_BGP_PUBLIC" >> ./src/gated/options
+	elif test $license_v4 = yes; then
+		echo "PROTO_BGP_MEMBER" >> ./src/gated/options
+	fi
+fi
+
+if echo $new_protocols | grep "PROTO_ASPATHS " > /dev/null; then
+	if test $license_v3 = yes; then
+		echo "PROTO_ASPATHS_PUBLIC" >> ./src/gated/options
+		AC_DEFINE_UNQUOTED(PROTO_ASPATHS_PUBLIC)
+	elif test $license_v4 = yes -o $license_v6 = yes; then
+		echo "PROTO_ASPATHS_MEMBER" >> ./src/gated/options
+		if echo $new_protocols | grep -v "PROTO_MPBGP" > /dev/null; then
+			echo "PROTO_BGP_MEMBER" >> ./src/gated/options 
+		fi
+		AC_DEFINE_UNQUOTED(PROTO_ASPATHS_MEMBER)
+	fi
+fi
+
+
+# copy options.dep file for filter, XXX need to remove this
+# cp $srcdir/src/gated/options.dep ./src/gated
+
+echo ""
+
+dnl
+dnl check which method of selecting interface routes to use
+dnl
+if test "$with_interface_route" = "primary"; then
+   AC_DEFINE(PRIMARY_ADDR_INTF_ROUTE)
+fi
+
+dnl Initialize SNMP variables
+AC_KERNEL_VARS(KSYM_BOOTTIME, _boottime boottime system_misc_kstat, unknown)
+AC_KERNEL_VARS(KSYM_IFNET, _ifnet ifnet, unknown)
+AC_KERNEL_VARS(KSYM_IN_IFADDR, _in_ifaddr in_ifaddr in_ifaddrhead, unknown)
+AC_KERNEL_VARS(KSYM_IP_MROUTER, _ip_mrouter ip_mrouter, unknown)
+AC_KERNEL_VARS(KSYM_IPFORWARDING, _ip_forwarding ipforwarding _ipforwarding,\
+ unknown)
+AC_KERNEL_VARS(KSYM_IPSTAT, _ipstat ipstat, unknown)
+AC_KERNEL_VARS(KSYM_RTHASHSIZE, _rthashsize rthashsize, unknown)
+AC_KERNEL_VARS(KSYM_RTHOST, _rthost rthost, unknown)
+AC_KERNEL_VARS(KSYM_RTNET, _rtnet rtnet, unknown)
+AC_KERNEL_VARS(KSYM_TCP_TTL, _tcp_ttl tcp_ttl tcpDefaultTTL _ip_defttl ip_defttl,\
+ unknown)
+AC_KERNEL_VARS(KSYM_UDPCKSUM, _udpcksum udpcksum _udp_cksum, unknown)
+AC_KERNEL_VARS(KSYM_VERSION, _version version, unknown)
+AC_KERNEL_VARS(KSYM_RADIXHEAD, radix_node_head, unknown)
+AC_LLADDR_TYPE
+
+dnl The following KVM type check must be done after looking for the kbm library
+AC_KVM_TYPE
+
+if test -f /tmp/kernel.nm; then
+   rm -f /tmp/kernel.nm
+fi
+
+dnl
+dnl the krt lladdr decision
+dnl
+if test $linux = yes; then
+	krt_os_objs="$krt_os_objs krt_lladdr_linux.o"  
+elif test $ac_cv_lladdr_type = "HPSTREAMS"; then
+	krt_os_objs="$krt_os_objs krt_lladdr_hpstreams.o"
+elif test $ac_cv_lladdr_type = "SUNOS4"; then
+	krt_os_objs="$krt_os_objs krt_lladdr_sunos4.o"
+elif test $ac_cv_lladdr_type = "SUNOS5"; then
+	krt_os_objs="$krt_os_objs krt_lladdr_sunos5.o"
+elif test $ac_cv_lladdr_type = "LINUX"; then
+	krt_os_objs="$krt_os_objs krt_lladdr_linux.o"
+elif test $ac_cv_lladdr_type = "KMEM"; then
+	krt_os_objs="$krt_os_objs krt_lladdr_kmem.o"
+fi
+
+dnl
+dnl build objects variable
+dnl
+echo "" > /tmp/$$.acs
+for i in $krt_os_objs; do
+	echo $i >> /tmp/$$.acs
+done
+krt_os_objs=`cat /tmp/$$.acs | sort -u`
+rm -f /tmp/$$.acs
+
+for i in $krt_os_objs; do
+       LIBKRT_OS_A_LIBADD="$LIBKRT_OS_A_LIBADD $i"
+done
+
+dnl
+dnl We now have all the objects, substitue that
+dnl
+AC_SUBST(LIBKRT_OS_A_LIBADD)
+
+dnl
+dnl set the subdirs to build and create the link additions
+dnl
+subdirs=
+if test $fordist = no; then
+	BUILD_SUBDIRS="$smux_module $modules $MCORE $SNMPDLIB $SNMPLIB gatedcompat gated gdc $RIPQUERY $RIP6QUERY $OSPF_MONITOR"
+else
+	dnl
+	dnl Make the list of subdirs from all checked-out protocols.
+	dnl
+	if test $license_v3 = yes; then
+		for s in $all_dirs_v3; do
+			if echo $subdirs | grep "$s " > /dev/null; then
+				:
+			else
+				subdirs="$subdirs$s "
+			fi
+		done
+	fi
+	if test $license_v4 = yes; then
+		for s in $all_dirs_v4; do
+			if echo $subdirs | grep "$s " > /dev/null; then
+				:
+			else
+				subdirs="$subdirs$s "
+			fi
+		done
+	fi
+	if test $license_v5 = yes; then
+		for s in $all_dirs_v5; do
+			if echo $subdirs | grep "$s " > /dev/null; then
+				:
+			else
+				subdirs="$subdirs$s "
+			fi
+		done
+	fi
+	if test $license_v6 = yes; then
+		for s in $all_dirs_v6; do
+			if echo $subdirs | grep "$s " > /dev/null; then
+				:
+			else
+				subdirs="$subdirs$s "
+			fi
+		done
+	fi
+	BUILD_SUBDIRS="$subdirs"
+fi
+
+AC_SUBST(BUILD_SUBDIRS)
+
+GATED_LDADD=
+for i in $smux_module $modules $MCORE $SNMPDLIB $SNMPLIB gatedcompat
+do
+	GATED_LDADD="$GATED_LDADD -L../$i -l$i"
+	#GATED_LDADD="$GATED_LDADD ../$i/lib$i.a"
+	GATED_DEPEND="$GATED_DEPEND ../$i/lib$i.a"
+done
+
+GATED_DEPEND="$GATED_DEPEND stamp-remdirs"
+
+AC_SUBST(GATED_LDADD)
+AC_SUBST(GATED_DEPEND)
+
+
+AC_OUTPUT(Makefile src/Makefile src/gii/Makefile src/gatedcompat/Makefile \
+	src/inet/Makefile src/gated/Makefile src/gdc/Makefile \
+	src/iso/Makefile src/krt/Makefile src/krt_os/Makefile \
+	src/scram/Makefile src/smux/Makefile \
+	src/rip/Makefile src/ripquery/Makefile src/krt_multi/Makefile \
+	src/egp/Makefile src/icmp/Makefile src/ospf/Makefile \
+	src/ospf_monitor/Makefile src/rdisc/Makefile src/slsp/Makefile \
+	src/aspath/Makefile src/bgp/Makefile \
+	src/gated/paths.h \
+	src/gated/version.c licenses/Makefile util/Makefile, \
+  	[date > src/gatedcompat/stamp-h; date > src/gated/stamp-h; \
+  	date > src/stamp-h])
+
+if test $fordist = no; then
+	echo "****"
+	echo "**** You must now run 'make depend'."
+	echo "****"
+fi

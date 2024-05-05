@@ -1,0 +1,122 @@
+Building GateD under GNU Autoconf
+
+GateD Releases Unicast, Multicast, IPv6, RSd
+
+Copyright (c) 1996,1997,1998,1999 
+The Regents of the University of Michigan.
+All Rights Reserved.
+
+License to use, copy, modify, and distribute this software and its
+documentation can be obtained from Merit Network, Inc. at the 
+University of Michigan.
+
+Merit GateD Consortium
+Merit Network, Inc.
+4251 Plymouth Road, Suite C
+Ann Arbor, MI 48105
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF 
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE REGENTS OF THE
+UNIVERSITY OF MICHIGAN AND MERIT DO NOT WARRANT THAT THE FUNCTIONS 
+CONTAINED IN THE SOFTWARE WILL MEET LICENSEE'S REQUIREMENTS OR THAT 
+OPERATION WILL BE UNINTERRUPTED OR ERROR FREE. The Regents of the
+University of Michigan and Merit shall not be liable for any special, 
+indirect, incidental or consequential damages with respect to any claim 
+by Licensee or any third party arising from use of the software. 
+GateD was originated and developed through release 3.0 by Cornell 
+University and its collaborators.
+
+Please send questions or comments to gated-people@gated.org.
+
+Please submit bugs, bug fixes, and enhancements using the send-pr(1) 
+utility or via the web at 
+www.gated.org/gated-web/support/html/report_prob.html.
+
+__END_OF_COPYRIGHT__
+
+
+I. Overview
+
+   This release of GateD uses GNU autoconf to detect platform-specific
+   configuration options.  You do not need to install autoconf to
+   build gated.  By default, gated is compiled with all protocols
+   available in the license under which it was distributed.
+   Should you wish to disable support certain protocols, see
+   Section IV at the end of this document.
+
+II. Getting started - building one GateD binary.
+
+   In the simplest case, you just want to compile gated for a
+   single architecture, with all protocols supported.  The procedure for
+   doing this is just:
+
+    cd gated-xxx
+    ./configure
+    make depend
+    make
+
+    You *must* run make depend before running make!
+
+III. Compiling gated for multiple platforms
+
+   In the more general case, you may want to compile gated-5.0 for
+   multiple platforms.  In this case, you should not build gated in
+   the original location (i.e., don't follow the steps in section II).
+   If you have already done section II, you may clean out the original
+   location by doing "make cleanall".  This removes files created by
+   ./configure in addition to those created by make ("make clean" only
+   removes files created by make).
+
+   To build gated for a new platform, you must first create a build
+   directory manually.  (The architecture type is NOT sufficient to
+   uniquely identify the features supported by the machine, so gated
+   will no longer guess a build directory to use.  Different machines
+   can vary in the kernel options enabled, which compiler is available,
+   etc.)
+
+   In the examples below, we will use gated-uni/obj/<machinename>
+   as the build directory.  If the machinename is "excelsior", you
+   would do:
+
+      cd gated-xxx
+      mkdir -p obj/excelsior
+      cd obj/excelsior
+      ../../configure --srcdir=../../
+      make depend
+      make
+
+      Again, you *must* run make depend before running make!
+
+IV. Enabling/disabling support for specific protocols
+
+    Protocols can be enabled or disabled by passing flags to the
+    "configure" script.  For a list of available protocols, use:
+
+    ./configure --help
+
+    For example, to compile the GateD binary without the RIP
+    protocol or the GateD Interactive Interface and with 
+    RSd support, use:
+
+    ./configure --disable-rip --disable-gii --enable-rsd
+
+    If you would like to build with only a few protocols, you may
+    find the --disable-all flag useful.  This turns off all protocols
+    and a small subset can then be enabled.
+
+V. Notes
+
+The autoconf'ed versions of GateD have been tested on the following
+platforms.  This is by no means an exhaustive list:
+
+	BSD/OS 2.x, 3.x, 4.x
+	FreeBSD	2.2.x, 3.x
+	NetBSD 1.2, 1.3, 1.4
+	Solaris 2.5.1, 2.6
+	SunOS 4.1.4
+	Linux 2.2.13 - 2.2.14
+	Linux 2.3.39
+	OpenBSD 2.5
+
+Ports are underway for HP-UX 10.x and 11.x, Linux, and Digital Unix.

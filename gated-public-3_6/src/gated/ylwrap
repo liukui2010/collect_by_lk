@@ -1,0 +1,74 @@
+#! /bin/sh
+#
+#	$Id: ylwrap,v 1.2 1999/05/24 01:10:19 chopps Exp $
+#
+# usage:
+# ylwrap <prg> <inputfile> [[<outfromprg> <newname>] ... ] [-- [prgargs]]
+#
+# unlike the automake distributed version, this one doesn't support
+# parallel makes, but then neither did the old system, and the
+# automake version is GPL'd
+#
+# this version is just for use in gated where we know things will work
+#
+
+#
+# check required args
+#
+if test "$#" -lt 2; then
+	echo "usage: ylwrap <prg> <inp> [[<out> <desired>] ...  ] [-- [prgargs]]"
+	exit 1
+fi
+
+program=$1; shift;
+input=$1; shift;
+maps=
+args=
+
+#
+# parse the arguments
+#
+while test "$#" -ne 0; do
+	if test X"$1" = X"--"; then
+		shift
+		args="$@"
+		break
+	fi
+	if test "$#" -lt 2; then
+		echo "usage: ylwrap <prg> <inp> [[<out> <desired>] ...  ] [-- [prgargs]]"
+		exit 1
+	fi
+	maps="$maps $1 $2"
+	shift
+	shift
+done
+
+#
+# execute the program
+#
+if $program $args $input; then
+	:
+else
+	exit $status
+fi
+
+#
+# test to see if any copying is needed
+#
+if test X"$maps" = X""; then
+	exit 0
+fi
+
+#
+# copy the files as directed
+#
+set $maps
+while test "$#" -ne 0; do
+	if mv $1 $2; then
+		:
+	else
+		exit $status
+	fi
+	shift
+	shift
+done

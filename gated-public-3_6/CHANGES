@@ -1,0 +1,503 @@
+$Id: CHANGES,v 1.55 2000/03/11 09:22:12 mrr Exp $
+Changes from 99/12/5 snapshot
+	bgp - merge bgp/mpbgp so they share a common core set of functions
+		[mrr 20000301]
+	mpbgp_rt.c - fix import-v4-mp config option to not install routes in
+		non-unicast ribs [swright 20000112]
+	mpbgp_rt.c - allow MP unreachables to be combined with other updates
+		in bgp_recv_v4_update() [swright 20000112]
+	mpbgp_rt.c - correct assert in bgp_rt_policy_peer()
+		[swright 20000109]
+	mpbgp_rt.c - fix active and eligible bit handling in
+		bgp_rib_change() [swright 20000109]
+	mpbgp - deprecate mpaspath module, merge changes into aspath
+		[swright 19991218]
+	aspath - remove nlrilen field from aspath_trace [swright 19991218]
+	gated - deprecated gendefault option [mrr 19991218]
+	rt_table - add global array rt_cmp for route comparison functions
+		[mrr 19991212]
+	bgp - break ties between routes with router-id, not next hop
+		[mrr 19991212]
+	aspath - add comm-del keyword/operations for specifying communities
+		to delete [mrr 19991211]
+	aspath - allow export filters to use aspath options [mrr 19991210]
+	bgp - fix problem with TTL peer option only being used some of the
+		time [mrr 19991209]
+	bgp - add routetopeer flag for peers in bgp.  This specifies that
+		you don't want the DONTROUTE option set on the socket
+		despite the fact that the peers are directly connected.
+		[mrr 19991209]
+	bgp - allow new ospf to be used with group type routing.
+		[mrr 19991209]
+	parser.y.unf - add IP_MULTICAST_ROUTING ifdef to allow compilation
+		on non-multicast capable machines. [swright 19991205]
+Changes from 99/11/5 snapshot:
+	CHANGES - fix mistakes I introduced into change log. [mrr 19991115]
+	aggregation - add bgp flag to aggregate statement along with noagg
+		flag on export route filters to perform bgp aggregation.
+		[mrr 19991115]
+	krt_rt_netlink.c - added support for adding and deleting routes via
+		netlink (linux)
+		[bobsills 19991108]
+	krt_rtread_netlink.c - added support to dump routing table into
+		gated via netlink (linux)
+		[bobsills 19991108]
+	krt_ifread_netlink.c - added support to read physical/logical
+		interface information via netlink
+		[bobsills 19991108]
+	AF_ISO - Added definition for linux so isis may be supported.
+		[bobsills 19991108]
+Changes from 99/10/22 snapshot:
+	rdisc.c - explicitly join all hosts group on interfaces doing
+		multicast router discovery - from hp [mrr 19991104]
+	mpbgp_rt.c - fixed more multiprotocol unreachable bugs and some
+		problems with sending multiprotocol routes
+		[swright 19991029]
+	krt_lladdr_kmem.c - make it work with OpenBSD [mrr 19991022]
+Changes from 99/10/08 snapshot:
+	rt_static.c - Added patch for gnats #688
+		[19991028 wfs]
+	mpbgp_rt.c - corrected multiple bugs in sending and receiving of
+		MP_UNREACH_NLRI [swright 19991019]
+	communities - change handling of communities to deal allow communities
+		on as-path regular expression route filters.  Also, switch
+		to comms and comm-add instead of aspath-opt and mod-aspath.
+		[mrr 19991009]
+	inet.c - parser error on a router if of 0.0.0.0 [mrr 19991008]
+Changes from 99/09/16 snapshot:
+	autoconf - added autoconf support
+	Linux 2.2 - added initial code for support of Linux 2.2
+		[bobsills 19990929]
+	re2dfa.c - Fix problems with as ranges of the form [X-Y A-B] where
+		X is less than A and Y is greater than B.  From JHaas.
+		[mrr 19990921]
+	parser.y.unf - Merge in buffer overflow fix from rsd.
+		[mrr 19990920]
+	aslex.c - actually return the value of the as you encountered.
+		[mrr 19990920]
+Changes from 99/09/08 snapshot:
+	mpbgp - fixed core caused by bgp_recv_mpreach() changing a sockaddr.
+		[swright 19990910]
+Changes from 99/05/07 snapshot:
+	mpaspath - added module used by mpbgp. [swright 19990827]
+	aspath - changed files back to original state (pre-mpbgp).
+		[swright 19990827]
+	mpbgp - fixed rib-changing bug, set cp to SEND_ATTR_V4 in
+		bgp_rt_send_v4_message_attr() for internal peers.
+		[swright 19990825]
+	if - add support for IFF_PRIVATE flag (do not advertise)
+	 	on interfaces. [naamato 19990823]
+	snmp - rewrite functions from the old cmu-agent library so
+		we can run snmp without it. [naamato 19990901]
+	autoconf - add support for both old ospf and new ospf
+		to be configured (PROTO_OSPF_EITHER). [naamato 19990830]
+	snmp - check write_method in all the mib modules before
+		doing anything with the function ptr. [naamato 19990902]
+	ospf - fixed core dump when ls_id != adv_rtr in self-orig LSA
+		[naamato 19990813]
+	gii - fixed core dump in gii_write upon reception 
+		of SIGPIPE [naamato 19990813]
+	ospf - applied patch for refcount in NH_BLOCK (wrapping with 50k routes)
+		[naamato 19990813]
+	snmp - ASN.1 parsing/building routines rewritten.
+		[naamato 19990708]
+	krt_rt_ioctl - added support for RT_N_MULTIPATH >= 1. [naamato 19990708]
+	if.c - added IFS_KEEPALL, support for keeping all interface routes
+		in the KRT. [naamato 19990708]
+	mpbgp - added.  Still a work in progress, but has some functionality
+		[swright 19990802]
+	aspath - modifications for mpbgp [swright 19990802]
+	rt_table - MED changes for mpbgp, multirib changes [swright 19990802]
+	gii - fixed buffer corrupting problems with reversed indicies
+		major cleanup done on this file WRT warnings [chopps 19990705]
+	new_isis - added IP encapsulation, fixed handling of zero sequence
+		LSPs, reorganized dump code, fixed random bugs.
+		still left: SPF, LSP Generation and DB purging
+		[chopps 19990705]
+	autoconf - added check for sendmsg(), turn isis on even when iso
+		is not present (uses IP encaps) [chopps 19990704]
+	task - added task_receive_packet_iov[_err] which is enabled if
+		sendmsg() is present (most systems) allows for scatter IO
+		using struct iovec [chopps 19990704]
+	task - added task_recv_if_index to return index of interface packet
+		was received on.  uses IP_RECVIF socket option.
+		[chopps 19990704]
+	all - fixed dependency generation.  Deps are
+		now generated properly per the configuration. [naamato 19990629]
+	util - added mkdep. [naamato 19990629]
+	all - 3.x, 4.x and 5.x releases are now formed from the
+		old gated-combo library. [chopps/naamato 19990629]
+	krt_ifread_combo - fixed bug for ISO and broadcast. [naamato 19990629]
+        new-mbr, krt_ipmulti_ttl0.c - bgmp_resolve_cache() moved to
+		krt_resolve_cache() [rusty 19990602]
+	mcore, pim*, dvmrp - moved find_downstream_ifap() from mbr.c to 
+		mrt_downstream_find() in mrt.c [rusty 19990602]
+	mrt - added functions: mrt_rtbit_task, mrt_rtbit_add,
+		mrt_rtbit_clr [rusty 19990602]
+	mroute.c - removed INCLUDE_MROUTE_KERNEL [rusty 19990525]
+	bgmp, autoconf - added src/bgmp/Makefile to AC_OUTPUT, changed
+		[rusty 19990525]
+	mcore - renamed bgmp_mbr.c to mcore/newmbr.c [rusty 19990525]
+	autoconf - added some fixes for freebsd3.1 and linux
+		[rusty 19990515]
+	aclocal.m4 - fixed the linux autoconf endless loop by adding
+		count=`expr $count + 1`
+         	[rusty 19990515]
+        configure.in - added a test for /proc/version, provided by linux
+		- added tests for INCLUDE_MROUTE_KERNEL
+		- added a test for <netinet/in_var.h>
+		- added a test for <netinet/ip_var.h>
+		- added a test for <netinet/udp_var.h>
+		- added a test for <bsd/bsd.h> used by some linux's
+		- added a test for <netinet/in_system.h>
+		- added a test for <nlist.h>
+	  	these tests replace some 'ifdef linux' tests
+               	[rusty 19990515]
+	gated, mbr - numerous changes  [rusty 19990515]
+	dvmrp.c - change INCLUDE_MROUTE_KERNEL to
+		INCLUDE_MROUTE [rusty 19990515]
+	gii - changes for printing pim rpset and upstream
+		info [rusty 19990515]
+	igmp - INCLUDE_MROUTE_KERNEL to INCLUDE_MROUTE
+		[rusty 19990515]
+	igmp_mib - added #ifdef HAVE_NETINET_IN_VAR_H around
+		the corresponding include. [rusty 19990515]
+	gated - replaced '#ifdef linux' test to
+		appropriate autoconf tests, for the following: 
+		HAVE_BSD_BSD_H
+		HAVE_IN_SYSTEM_H
+		HAVE_NETINET_IN_SYSTEM_H
+		HAVE_NETINET_IP_VAR_H
+		HAVE_NETINET_UDP_VAR_H
+		HAVE_NLIST_H
+		added the following check: defined(INCLUDE_MROUTE),
+		for including <netinet/ip_mroute.h> [rusty 19990515]
+	gated - put BREAKS_REDHAT def around linux/in_system.h
+		added a test INCLUDE_LINUX, to include the local
+		linux.h.  linux.h was created to overcome including
+		<linux/*.h> headers.  according to linux enthusiasts,
+		the linux directory is kernel only.  including files
+		from this dir can often lead to conflicting def's, yet
+		contains struct def's gated needs, in particular
+		ip_mroute.h related things.  to overcome this we'll
+		just maintain our own header until this gets
+		straigtened out. [rusty 19990515]
+	krt_ipmulti_ttl0 - added 'mfc_' prefix to krt_request fields, these are 
+		just macros.
+		set (u_char) typecast for setting ttls in the mfcctl 
+		struct.  avoids compile warnings [rusty 19990515]
+	src/gated/krt_rtread_proc.c -
+	krt_rtread_proc.c - added a previously submitted linux bug fix
+		for reading interfaces in a 2.2 kernel. [rusty 19990515]
+	src/gated/mroute.c - remove INCLUDE_MROUTE_KERNEL [rusty 19990515]
+	mbr.h - changes to 'struct krt_request': added field prefix
+		'mfc_' to fields or created an 'mfc_*' def.  trying to 
+		be consistent with the rest of the code.
+
+		- added fields to krt_request: task *mfc_owner,
+		upstream_t *mfc_upstream, added mfc_dstable to set
+		vifs.  actually mfc_upstream was already there it was
+		used but ignored, i changed it's usage to be set by
+		the m-igp according to who it thought it's upstream
+		nbr should be.
+
+		- added KRTREQ_REJECT. this allows the owner to tell the 
+		mbr that the requested (s,g) should be rejected by the 
+		mbr.  the mbr places a neg cache entry in to the
+		kernel to stop futher process of corresponding data.
+		in relation, i added an mbr_neg_cache() function to
+		add neg cache entries to the kernel.
+		[rusty 19990515]
+	mrt - added ds_table[] to the downstream interface.
+		added ds_rtbits in addition to dsprotos
+		added '(void *) data' mrt_src_list to make this
+		generic structure more useable.
+		added rtbits to the source_t entry, [rusty 19990515]
+	multicast_mib.c - surronded in_var.h, nlist.h and libelf/nlist.h with
+		appropriate ifdef's. [rusty 19990515]
+	pim_mib.c, pimdm.c - removed INCLUDE_MROUTE_KERNEL [rusty 19990515]
+	pim - added hello priority option [rusty 19990515]
+	pimsm, parser - added c-rp priority option [rusty 19990515]
+	README - fixed typos [mrr 19990501]
+
+Changes from 11/20/98 snapshot:
+	isis - added the beginning of the new isis implementation.
+		[chopps 19990429]
+	ptree - added new generic patricia tree code [chopps 19990429]
+	gqueue.h - added new generic list macros [chopps 19990429]
+	autoconf - modified autoconf to allow specifying --with-<proto>
+		with default being all supported by OS [chopps 19990429]
+	autoconf - only compile needed source files [chopps 19990429]
+	str.c - support for alternate LL_ADDR printing [chopps 19990429]
+	task.[ch] - support for only subtracting jitter flag [chopps 19990429]
+	sockaddr.h - modified constant SOCK_MAXADDRLEN name to avoid conflict
+		with freebsd [chopps 19990429]
+	autoconf - many changes for HP-UX 10.x, FreeBSD 3.1 (some from eddy@isi.edu)
+		[naamato 990429]
+	new_ospf - merged new ospf code (from chopps) into library. [naamato 990429]
+	dvmrp - fixed a bug which prevented a designated router from re-assuming
+		the DR role after a source would become reachable again after a
+		period of unreachability. [ala 990422]
+	mbr.c - Fixed a bug in mbr_sg_add_downstream2 whereby the wrong upstream
+		interface was being inserted into the kernel's multicast forwarding
+		cache.o. [ala 990422]
+	dvmrp_mib - Fixed a bug in o_dvmrpRouteNextHopTable whereby an snmp
+		query containing a non-contiguous netmask would cause gated to core.
+		[ala 990422]
+	ospf_monitor - fixed spelling error. [naamato 990408]
+	dvmrp_targets.c - Fixed a bug in dvmrp_td_remove which caused gated to
+		core when interface running dvmrp would be configured down then up.
+		[ala 990322]
+	compat/flock - Fix broken #define's that prevented gdc from working in
+		Solaris. [naamato 990312].
+	task.c - Use mmap() with MAP_ANON (added by chopps) if supported by the
+		underlying OS. [naamato 990312]
+	smux - RFC1227 SMUX implementation rewritten to use CMU-based 
+		UCD-SNMP library instead of the obsolete ISODE code.
+		The SMUX code now uses a separate task and is available
+		as an alternative to the embedded CMU agent. [naamato 990111]
+	snmpdlib - The embedded CMU agent modified to use the updated
+		UCDavis library. [naamato 990111]
+	snmplib  - The SNMP library has been updated to UCDavis release 3.5.3.
+	ospf_init.c - ignore assert that can fail when changing netmask [chopps 990122] 
+	ospf_init.h - don't use depricated area->authtype to determine 
+		the trailer size of the packet for authentication, 
+		instead use the interface authentication field. [chopps 990122]
+	pimdm.c - Fixed pimdm_sg_creation_recv() and pimdm_assert_downstream.
+		PIMDM oifs are now merged with the kernel request's
+		downstream list instead of being added individually.
+		Changed the amount of time that scheduled prunes are 
+		delayed.  Different pimdm spec revisions are inconsistent 
+		in their wording, but it currently says that joins should 
+		be sent in time less-than-or-equal-to 3 seconds.  Thus, 
+		prunes should be scheduled in time strictly greater-than 
+		3 seconds (4 seconds for gated). Regardless, it doesn't 
+		hurt compatibility to delay an extra second. [eddy@isi.edu]
+	ospf - Only allow stub hosts to be either p2p or loopback. [wfs 981130]
+	ospf_monitor - Fixed spelling error in ospf_monitor.
+                ospf_rxmon.c [wfs 981130]
+        ospf_monitor - Fix incorrect handling of interface alias on solaris machines.
+                [wfs 990123]
+        task - Added code to run Gated under purify.  [wfs 990123]
+        parser.y.unf - parser now checks that c-rp configured addrs are
+		mcast group addresses. [eddy@isi.edu 981124]
+	gii.c - updated the information printed for 'sh ip pim c-rp'
+	bgmp.c - added some packet tracing code [eddy@isi.edu 981124]
+	krt_lladdr_sunos4.c
+		the ioctl's in krt_lladdr() seem to be broke,
+		so we use the parameter info if available to
+		avoid calling the broke ioctl's. [rusty 991123]
+	krt_ifread_ioctl.c
+		added dump_ifrp() from the old code back into
+		this file and call it from krt_ifread().  simply
+		for diagnostics. [rusty 991123]
+	src/gated/Makefile.in
+		added bgmp_mbr.[co] to the Makefile.in, needed for
+		bgmp. [rust 991123]
+Changes by rusty 11/20/98
+	bgmp.[ch] and bgmp_mbr.c
+		   more general development
+
+	dvmrp.c, gii.c, multicast_mib.c
+		added '#define INCLUDE_MROUTE_KERNEL' above include.h
+		to cause ip_mroute.h kernel define to be included.
+
+	include.h
+		netbsd uses the define _KERNEL as opposed to KERNEL,
+		this is needed for ip_mroute.h
+
+	krt_ifread_ioctl.c
+		added a (char *) type cast to avoid compiler warnings
+
+	krt_ipmulti_ttl0.c, mbr.[hc]:
+		added INCLUDE_MROUTE_KERNEL and replace
+		krt_generate_cache() with mbr_handle_upcall(). 
+
+	mroute.c
+		added mbr_handle_upcall() and in igmp_recv(), moved
+		the len and checksum sanity checks to before the
+		mbr_handle_upcall(), since upcalls must do the same.
+
+	mrt.[hc]:
+		added INCLUDE_MROUTE_KERNEL and some global wildcard
+		sockaddrs.  also changed genericised mrt flags and
+		extended them to 32 bits from 8 bits.
+
+	parse.c:
+		added strings for threshold-dr and threshold-rp for
+		pimsm configuration options.
+
+	parser.y.unf:
+		pim configuration changes
+
+	pim.[ch], pim_mib.c, pimdm.c and pimsm.c
+		INCLUDE_MROUTE_KERNEL and configuration support for
+		changes.  pimdm sender_is_member (small change).
+		pimsm now allows c-rp configuration for group ranges
+		of the type:
+
+		   crp {
+		       225.1.0.0 masklen 16;
+		       225.2.1.0 masklen 24;
+		   };
+			
+
+Changes from 8/21/98 snapshot
+	 Removed offensive language from source code modules.
+                bgp_init.c, slsp.h, slsp_io.h, slsp_mib.c, task.c, task.h
+                chopps
+	 Fix for GNATS #41 - freeing ASpath memory.
+                asmatch.c       swright
+	 Added patch to prevent coredumps when routes are received with
+                community attributes and no origin attributes.  [gnats 230]
+                aspath_hash.c   swright
+        Added patch to prevent BGP from advertising an address of a peer as a
+                NEXT_HOP for routes gated is originating.  [gnats 247/248]
+                bgp_rt.c        swright
+        Added patch to correctly log information regarding BGP optional
+                parameters (currently unsupported in gated).  [gnats 216]
+                bgp.c, bgp_init.c, bgp_proto.h, bgp_rt.c, bgp_var.h
+                swright
+        Applied patch for gnats #239, small fix to bgp traceoptions.
+                bgp_rt.c   swright
+	Added fixes for RIP bugs 145 and 99; make sure authentication isn't
+	specified unless version2 is, and allow VLSN routes in RIP "unicast" mode.
+		rip.c	   cwr
+	Change to RIP configuration.  Will now run rip only on interfaces configured
+	in rip statement, if any.  If none specified continues to run on all p2p,
+	broadcast, and nbma i/f's.
+		rip.c, targets.c   acr
+	Fixed bug in sender-is-member heuristic
+		pimdm.c		kurtw
+	MIB changes for ucd 3.5.3 snmplib
+		pim_mib.c, bgp_mib.c, egp_mib.c, igmp_mib.c, multicast_mib.c	naamato
+	pim crp config corrections
+		pim.c, pim.h		eddy
+	pim configuration options fixed
+		pim.c, pim.h, parse.c, dvmrp.c, gii.c, mbr.c, mrt.c	eddy
+	added support for bgmp
+		parse.c		eddy
+	Bug fix.  rib loop blowing rta, aggregate entry pointer.
+		rt_aggregrate.c		acr
+	increase of AS_COMM_MAX to 25 from 10.
+		aspath.h	swright
+	Added patch from Acee that checks for multiple next-hops when multipath routing is used.
+		krt.c, krt_rt_sock.c	wfs
+	Wasn't assigning a value to the remote addr field when not p2p. Fixed it so it is the same as
+	the local address when not p2p.  
+		krt_ifread_ioctl.c	wfs 
+	This is mostly pim config changes, this provides support for all of
+	the specified options as stated in the config guide, a pim config
+	option test was also added to the test directory.
+		mbr.c		wfs
+	
+
+
+Changes from 3/20/98 snapshot
+	Rewrite of krt_ifread_ioctl code.
+		krt_ifread_ioctl.c, krt_lladdr_sunos4.c  wfs
+	Removed offensive language from source code modules.
+                bgp_init.c, slsp.h, slsp_io.h, slsp_mib.c, task.c, task.h
+                chopps
+        Added patch to correctly log information regarding BGP optional
+                parameters (currently unsupported in gated).  [gnats 216]
+                bgp.c, bgp_init.c, bgp_proto.h, bgp_rt.c, bgp_var.h
+                swright
+        Added patch to prevent coredumps when routes are received with
+                community attributes and no origin attributes.  [gnats 230]
+                aspath_hash.c   swright
+        Added patch to prevent BGP from advertising an address of a peer as a
+                NEXT_HOP for routes gated is originating.  [gnats 247/248]
+                bgp_rt.c        swright    
+	Replaced ASpath handler with extended ASPath regexp handler derived
+		from rsd	khuon
+        Fixed problem freeing ASpath memory.  [gnats 41]
+                asmatch.c       swright
+Minor cleanup and doc changes to dvmrp_targets.c.  
+Added Extended RIB support.  Now possible to support more than 2 RIBS.
+  Setting PROTO_RSD in options file defines EXTENDED_RIBS which causes
+  additional flag words to be included in the rt_head and rt_entry 
+  structures to handle up to 32 RIBs.  Some function calls were modified
+  to handle passing of RIB bits outside of the rt_state flags.
+  Not defining EXTENDED_RIBS will continue to support the Unicast and Multicast
+  RIBs in the same way as prior combo versions.
+                dvmrp.c, gii.c, if.c, inet.c, mbr.c, new_ospf_spf.c, 
+                options.dep, ospf_rt.c, ospf_spf_leaves.c, parse.c, 
+                parser.y.unf, policy.c, rip.c, rt_aggregate.c, rt_static.c, 
+                rt_table.c, rt_table.h
+Fixes to dvmrp_routing.c gii.c
+  Fixed the case where the router upon which we are dependent for a route
+  decides that it is dependent on our upstream interface for the route.  The
+  spec. says to ignore this but this is wrong.  The code needs to treat this
+  as if the route is now unreachable in the downstream router.
+
+  Ensure that rth1_info is freed from rt_head.  Fix related bug in gii
+  show ip dvmrp route command.
+Fixes to dvmrp.c
+  Applied patch submitted by  ravi Sastry <rsastry@bbn.com>.  Here
+  is his msg.
+
+  -ala
+
+  >  Problem:
+  >
+  >      DVMRP crashes in the dvmrp_graft_timeout() function
+  >
+  >  How to reproduce:
+  >
+  >      H1 ------ R1  -------- R2  --------- R3  -------- H3
+  >
+  >
+  >      ( H1, H2 and H3 are hosts. R1, R2, and R3 are routers running
+  >        Gated)
+  >
+  >     - bring up R1, R2 and R3.
+  >     - bring up a multicast application on H3 (such as whiteboard)
+  >       with a group G1. Send some multicast data from H3.
+  >     - R1 will send a prune.
+  >     - put Gated on R2 in gdb and put a break point in the function
+  >       dvmrp_recv_graft().
+  >     - bring up multicast application on H1 with the same group G1.
+  >     - R1 will send  a graft and gdb on R2 will hit the breakpoint.
+  >       Let the gated remain at the gdb prompt. (i.e. don't make R2
+  >       send graft-ack to R1)
+  >     - R1 will crash in dvmrp_graft_timeout() function.
+  >
+  >   Fix:
+  >
+  >    In the dvmrp_graft_timeout() function, a call is made to
+  >    dvmrp_send_graft2() to send another graft, which in turn calls
+  >    dvmrp_assert_graft().
+  >
+  >    In the dvmrp_assert_graft() function, the code tries to make use
+  >    of the existing graft instead of creating another graft.  However,
+  >    it doesn't deque the graft from the graft_head and enqueue with
+  >    a new timeout properly.
+  >
+  >    Here is the new code: (in dvmrp_assert_graft() )
+  >
+  >      new = MFC_GRAFT(src);
+  >      if ( !new ) {
+  >        ......... retain the same old code
+  >      } else {
+  >          new->holdtime *= 2;
+  >          REMQUE(new); /* remove the existing graft entry from the list */
+  >          new->forw = new->back = 0;
+  >      }
+  >      new->graft_time = time_sec + new->holdtime;
+  >      /* Insert in order in the timer queue */
+  >     {
+  >          graft_entry *gp = graft_head.forw;
+  >          while ( gp != &graft_head && gp->graft_time < new->graft_time ) {
+  >             gp = gp->forw;
+  >          }
+  >          INSQUE ( new ,gp->back);
+  >      }
+  >
+  >     /* rest of the code is same  */
+  >
+  >
+  >
+  >  ravi/
+
+  Fixing a double freeing bug reported by ravi @bbn.

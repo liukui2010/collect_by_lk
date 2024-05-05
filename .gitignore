@@ -30,3 +30,20 @@
 *.exe
 *.out
 *.app
+
+### liukui
+#
+*.IAB
+*.IAD
+*.IMB
+*.IMD
+*.PFI
+*.PO
+*.PR
+*.PRI
+*.PS
+*.SearchResults
+*.WK3
+#
+bk/
+### liukui

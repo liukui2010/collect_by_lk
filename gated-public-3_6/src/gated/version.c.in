@@ -1,0 +1,5 @@
+#include "include.h"
+
+const char *gated_version = "@VERSION@";
+const char *build_date = "@BUILD_DATE@";
+const char *version_id = "\\@(#)gated @VERSION@ @BUILD_DATE@";

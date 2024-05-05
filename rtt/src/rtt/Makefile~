@@ -1,0 +1,171 @@
+ARCH = $(shell uname)
+
+ifeq ($(ARCH), SunOS)
+ARCH = $(PLATFORM)
+PROCESSOR = '$(shell uname -p)
+ifeq ($(PROCESSOR),i386)
+ARCH = i86pc
+endif
+
+
+endif
+
+ifeq ($(ARCH),i86pc)
+  OSDEF = solaris
+  ASMDEF = $(ARCH)
+else
+  OSDEF = $(ARCH)
+  ASMDEF = $(ARCH)
+endif
+
+# I'm not changing the definition in the rttcontext.s file
+ifeq ($(ARCH), solaris)
+  ASMDEF=sun4sol
+endif
+
+#TRACING = PTRACE
+#TRACINGDEF = -DPTRACE
+TRACING = 
+TRACINGDEF = 
+
+#IBM_CC = gcc
+IBM_CC = xlc -D_ALL_SOURCE
+
+CC      = gcc
+
+RTTINC = ../../include
+
+#DEBUG = -DRTT_MEM_DEBUG
+#DEBUG = -DRTTEXITDEBUG
+#DEBUG = -DUSE_RTTTRACING
+DEBUG = 
+
+# need to have this definition for all architectures if AIO is supported. 
+# far, this is on IBM, and Solaris
+ASYNCIOINC = -DASYNCIO
+#ASYNCIOINC = 
+
+ifeq ($(OSDEF),i386freebsd)
+  CFLAGS =  -g $(DEBUG) $(TRACINGDEF) -D$(OSDEF) -DRTT -I$(RTTINC) -I.
+else
+  CFLAGS =  -g $(DEBUG) $(TRACINGDEF) -D$(OSDEF) $(ASYNCIOINC) -DRTT -I$(RTTINC) -I.
+endif
+
+
+ifeq ($(OSDEF),solaris)
+  CPP = /usr/ccs/lib/cpp
+else
+ifeq ($(OSDEF),i386freebsd)
+  CPP = /usr/bin/cpp
+else
+ifeq ($(OSDEF),NetBSD)
+  CPP = /usr/bin/cpp
+else
+  CPP = /lib/cpp
+endif
+endif
+endif
+SD  =   .
+OD  =   ../../obj/$(ARCH)$(TRACING)
+LD  =   ../../lib/$(ARCH)
+
+
+ifeq ($(OSDEF),ibm)
+  CC = $(IBM_CC)
+  ASM_CC = $(IBM_CC)
+  LF =
+else
+ifeq ($(OSDEF),hp700)
+  ASM_CC = cc
+#  CC = cc -Aa -D_HPUX_SOURCE
+  CC = gcc
+  LF = -lV3
+else
+  CC = gcc
+  ASM_CC = gcc
+  LF =
+endif
+endif
+
+OBJS =	$(OD)/rttstart.o $(OD)/rttcontext.o $(OD)/rttio.o $(OD)/rttitc.o \
+        $(OD)/rttthreadmgmt.o $(OD)/rttsched.o $(OD)/rttsem.o \
+        $(OD)/rttreadyqueue.o $(OD)/rttattr.o $(OD)/rttns.o \
+	$(OD)/rttremoteitc.o $(OD)/rttmem.o $(OD)/rttptrace.o \
+        $(OD)/rtttrace.o $(OD)/rttmeasure.o 
+
+SRC =	$(SD)/rttcontext.s $(SD)/rttio.c $(SD)/rttitc.c $(SD)/rttthreadmgmt.c \
+	$(SD)/rttsched.c $(SD)/rttsem.c \
+	$(SD)/rttreadyqueue.c $(SD)/rttattr.c $(SD)/rttns.c \
+	$(SD)/rttremoteitc.c $(SD)/rttmem.c $(SD)/rttptrace.c \
+        $(SD)/rtttrace.c $(SD)/rttmeasure.c 
+
+INC =	$(SD)/rttio.h $(SD)/rttitc.h $(SD)/rttkernel.h $(SD)/rttconfig.h \
+        $(SD)/rtttypes.h $(SD)/rttreadyqueue.h \
+	$(RTTINC)/rtthreads.h $(SD)/rttthreadmgmt.h $(SD)/rttqueuemgmt.h \
+	$(SD)/rttsched.h $(SD)/rttsem.h $(SD)/rttmem.h \
+	$(SD)/rttremoteitc.h $(SD)/rttptrace.h $(SD)/rttmeasure.h 
+
+KERN_INC = $(RTTINC)/rtthreads.h $(RTTINC)/RttThreadId.h $(SD)/rtttypes.h \
+        $(SD)/rttitc.h $(SD)/rttreadyqueue.h \
+	$(SD)/rttthreadmgmt.h $(SD)/rttsem.h $(SD)/rttsched.h $(SD)/rttattr.h \
+	$(SD)/rttqueuemgmt.h $(SD)/rttconfig.h $(SD)/rttio.h         \
+	$(SD)/rttmem.h $(SD)/rttremoteitc.h $(SD)/rttptrace.h
+
+all:	lib
+
+lib:  $(OBJS) $(LD)/libRtt$(TRACING).a
+
+
+$(LD)/libRtt$(TRACING).a: $(OBJS)
+	ar rc $(LD)/libRtt$(TRACING).a $(OBJS)
+	-@chmod ug+w $(LD)/libRtt$(TRACING).a
+	-@chmod ug+w $(OD)/*.o
+ifneq ($(OSDEF),sun4sol)
+	ranlib $(LD)/libRtt$(TRACING).a
+endif
+
+appl: $(OD)/$(TARGET)
+
+
+$(OBJS): $(SD)/rttkernel.h $(KERN_INC)
+
+$(OD)/%.o: $(SD)/%.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OD)/rttio.o: $(SD)/rttio.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttio.c -o $(OD)/rttio.o
+$(OD)/rttthreadmgmt.o: $(SD)/rttthreadmgmt.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttthreadmgmt.c -o $(OD)/rttthreadmgmt.o
+$(OD)/rttsched.o: $(SD)/rttsched.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttsched.c -o $(OD)/rttsched.o
+$(OD)/rttstart.o: $(SD)/rttstart.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttstart.c -o $(OD)/rttstart.o
+$(OD)/rttreadyqueue.o: $(SD)/rttreadyqueue.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttreadyqueue.c -o $(OD)/rttreadyqueue.o
+$(OD)/rttattr.o: $(SD)/rttattr.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttattr.c -o $(OD)/rttattr.o
+$(OD)/rttns.o: $(SD)/rttns.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttns.c -o $(OD)/rttns.o
+$(OD)/rttsem.o: $(SD)/rttsem.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttsem.c -o $(OD)/rttsem.o
+$(OD)/rttremoteitc.o: $(SD)/rttremoteitc.c $(SD)/rttudpitc.c $(SD)/rtttcpitc.c $(SD)/rttkernel.h $(SD)/rttremoteitc.h
+	$(CC) $(CFLAGS) -c $(SD)/rttremoteitc.c -o $(OD)/rttremoteitc.o
+$(OD)/rttitc.o: $(SD)/rttitc.c $(SD)/rttkernel.h $(SD)/rttremoteitc.h
+	$(CC) $(CFLAGS) -c $(SD)/rttitc.c -o $(OD)/rttitc.o
+$(OD)/rttmem.o: $(SD)/rttmem.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttmem.c -o $(OD)/rttmem.o
+$(OD)/rttptrace.o: $(SD)/rttptrace.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttptrace.c -o $(OD)/rttptrace.o
+$(OD)/rtttrace.o: $(SD)/rtttrace.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rtttrace.c -o $(OD)/rtttrace.o
+$(OD)/rttmeasure.o: $(SD)/rttmeasure.c $(SD)/rttkernel.h
+	$(CC) $(CFLAGS) -c $(SD)/rttmeasure.c -o $(OD)/rttmeasure.o
+
+
+$(OD)/rttcontext.o: $(SD)/rttcontext.s
+	$(CPP) -P -D$(ASMDEF) $(SD)/rttcontext.s > $(OD)/_rttcontext.s
+	$(ASM_CC) -g -c -o $(OD)/rttcontext.o $(OD)/_rttcontext.s
+	rm $(OD)/_rttcontext.s
+
+clean:
+	rm -f core *~ $(OBJS) $(LD)/libRtt$(TRACING).a

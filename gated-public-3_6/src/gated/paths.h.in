@@ -1,0 +1,131 @@
+/*
+ * GateD Releases Unicast, Multicast, IPv6, RSd
+ * 
+ * Copyright (c) 1996,1997,1998,1999 
+ * The Regents of the University of Michigan.
+ * All Rights Reserved.
+ * 
+ * License to use, copy, modify, and distribute this software and its
+ * documentation can be obtained from Merit Network, Inc. at the 
+ * University of Michigan.
+ * 
+ * Merit GateD Consortium
+ * Merit Network, Inc.
+ * 4251 Plymouth Road, Suite C
+ * Ann Arbor, MI 48105
+ * 
+ * THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF 
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE REGENTS OF THE
+ * UNIVERSITY OF MICHIGAN AND MERIT DO NOT WARRANT THAT THE FUNCTIONS 
+ * CONTAINED IN THE SOFTWARE WILL MEET LICENSEE'S REQUIREMENTS OR THAT 
+ * OPERATION WILL BE UNINTERRUPTED OR ERROR FREE. The Regents of the
+ * University of Michigan and Merit shall not be liable for any special, 
+ * indirect, incidental or consequential damages with respect to any claim 
+ * by Licensee or any third party arising from use of the software. 
+ * GateD was originated and developed through release 3.0 by Cornell 
+ * University and its collaborators.
+ * 
+ * Please send questions or comments to gated-people@gated.org.
+ *
+ * Please submit bugs, bug fixes, and enhancements using the send-pr(1) 
+ * utility or via the web at 
+ * www.gated.org/gated-web/support/html/report_prob.html.
+ * 
+ * __END_OF_COPYRIGHT__
+ */
+
+#define	_PATH_CONFIG	"/etc/%s.conf"
+#define	_PATH_DEFS	"/usr/include/isode"
+#define	_PATH_DUMP	"@DUMPDIR@/%s_dump"
+#define	_PATH_DUMPDIR	"@DUMPDIR@"
+#define	_PATH_PID	"@PIDDIR@/%s.pid"
+#define	_PATH_VERSION	"@PIDDIR@/%s.version"
+
+/* Gated specific Paths from configuration */
+#define _PATH_SBINDIR   "@SBINDIR@"
+
+/* System specific paths (not everyone runs BSD 4.4, do they) */
+#ifndef	_PATH_DEVNULL
+#define	_PATH_DEVNULL		"/dev/null"
+#endif	/* _PATH_DEVNULL */
+
+#ifndef	_PATH_DEV
+#define	_PATH_DEV	"/dev"
+#endif	/* _PATH_DEV */
+
+#ifndef	_PATH_KMEM
+#define	_PATH_KMEM	"/dev/kmem"
+#endif	/* _PATH_KMEM */
+
+#ifndef	_PATH_TTY
+#define	_PATH_TTY	"/dev/tty"
+#endif	/* _PATH_TTY */
+
+#ifndef	_PATH_UNIX
+#define	_PATH_UNIX	"@_path_unix@"
+#endif	/* _PATH_UNIX */
+
+#ifndef	_PATH_VARTMP
+#define	_PATH_VARTMP	"@DUMPDIR@"
+#endif	/* _PATH_VARTMP */
+
+/* Non-path information */
+#ifndef	GDC_GROUP
+#define	GDC_GROUP	"gdmaint"
+#endif	/* GDC_GROUP */
+
+#ifndef	NAME_GATED
+#define	NAME_GATED	"gated"
+#endif	/* NAME_GATED */
+
+#ifndef	NAME_GDC
+#define	NAME_GDC	"gdc"
+#endif	/* NAME_GDC */
+
+#ifndef	NAME_RIPQUERY
+#define	NAME_RIPQUERY	"@RIPQUERY@"
+#endif	/* NAME_RIPQUERY */
+
+#ifndef	NAME_OSPF_MONITOR
+#define	NAME_OSPF_MONITOR	"@OSPF_MONITOR@"
+#endif	/* NAME_OSPF_MONITOR */
+
+/*
+ * ------------------------------------------------------------------------
+ *
+ *	Copyright (c) 1990,1991,1992,1993,1994,1995 by Cornell University.
+ *	    All rights reserved.
+ *
+ *	THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY
+ *	EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
+ *	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ *	AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ *	GateD is based on Kirton's EGP, UC Berkeley's routing
+ *	daemon	 (routed), and DCN's HELLO routing Protocol.
+ *	Development of GateD has been supported in part by the
+ *	National Science Foundation.
+ *
+ * ------------------------------------------------------------------------
+ *
+ *	Portions of this software may fall under the following
+ *	copyrights:
+ *
+ *	Copyright (c) 1988 Regents of the University of California.
+ *	All rights reserved.
+ *
+ *	Redistribution and use in source and binary forms are
+ *	permitted provided that the above copyright notice and
+ *	this paragraph are duplicated in all such forms and that
+ *	any documentation, advertising materials, and other
+ *	materials related to such distribution and use
+ *	acknowledge that the software was developed by the
+ *	University of California, Berkeley.  The name of the
+ *	University may not be used to endorse or promote
+ *	products derived from this software without specific
+ *	prior written permission.  THIS SOFTWARE IS PROVIDED
+ *	``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES,
+ *	INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+ *	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */

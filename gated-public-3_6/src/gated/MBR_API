@@ -1,0 +1,230 @@
+MBR functions available to components
+-------------------------------------
+
+void
+mbr_register(tp, sg_creation_recv, sg_wrongif_recv, sg_join_recv, sg_prune_recv,
+ grp_join_recv, grp_prune_recv, grp_aux_join_recv, grp_aux_prune_recv,
+ get_neighbors)
+   task *tp;                    /* IN: component */
+   void (*sg_creation_recv)();  /* IN: fcn to receive (S,G) Creation alerts  */
+   void (*sg_wrongif_recv)();   /* IN: fcn to receive (S,G) WrongIf alerts   */
+   void (*sg_join_recv)();      /* IN: fcn to receive (S,G) Join alerts      */
+   void (*sg_prune_recv)();     /* IN: fcn to receive (S,G) Prune alerts     */
+   void (*grp_join_recv)();     /* IN: fcn to receive (*,G) Join alerts      */
+   void (*grp_prune_recv)();    /* IN: fcn to receive (*,G) Prune alerts     */
+   void (*grp_aux_join_recv)(); /* IN: fcn to receive (*,G) Aux Join alerts  */
+   void (*grp_aux_prune_recv)();/* IN: fcn to receive (*,G) Aux Prune alerts */
+   struct sockaddr_list *(*get_neighbors)(); /* IN: fcn to get list of nbrs */
+
+This should be called upon initialization to register to receive alerts.
+If the component doesn't wish to receive a particular alert, a NULL pointer
+can be passed.  Each function is called as follows:
+
+   static void
+   sg_creation_recv (req)
+      krt_request_t *req;
+
+   This is called in all components when a kernel cache miss occurs.  Note 
+   that we aren't told anything about which interface a packet arrived on, 
+   but we are told the RPF information.  That is, req->ifap doesn't 
+   contain any information.  The component should set req->ds to its
+   list of downstream information.  (Merging is done by the MBR routines.)
+
+   static void
+   sg_wrongif_recv(saddr, gaddr, ifap) 
+      sockaddr_un *saddr; /* IN: source address */ 
+      sockaddr_un *gaddr; /* IN: group address  */
+      if_addr     *ifap;  /* IN: interface on which a pkt was received */
+
+   This is called when a packet is received on an interface other than
+   the upstream interface.  Only the component owning the interface on
+   which the packet was received will get this alert.
+
+   static void
+   sg_join_recv(saddr, gaddr, ifap)
+      sockaddr_un *saddr; /* IN: source address */
+      sockaddr_un *gaddr; /* IN: group address  */
+      if_addr     *ifap;  /* IN: new downstream iface (may or may not be ours)*/
+
+   This is called by the lower-level MBR routines when the first oif is
+   added (by any component) to the actual kernel cache entry.  The fact
+   that we're receiving this alert means that sg_creation_recv was
+   called previously, and we own the upstream interface.  We should now
+   trigger a join upstream.
+
+   static void
+   sg_prune_recv(saddr, gaddr)
+      sockaddr_un *saddr; /* IN: source address */
+      sockaddr_un *gaddr; /* IN: group address  */
+
+   This is called by the lower-level MBR routines when the last oif is
+   removed (by any component) from the actual kernel cache entry.  The
+   fact that we're receiving this alert means that sg_creation_recv was
+   called previously, and we own the upstream interface.  We should now
+   trigger a prune upstream.
+
+   static void
+   grp_join_recv(gaddr, gmask)
+      sockaddr_un *gaddr;
+      sockaddr_un *gmask;
+
+   This is called by the lower-level MBR routines when the first (other)
+   component decides it's interested in the given group range.  Current
+   multicast protocols will either use 0/0 to request all groups, or
+   specify a single group.
+
+   static void
+   grp_prune_recv(gaddr, gmask)
+      sockaddr_un *gaddr;
+      sockaddr_un *gmask;
+
+   This is called by the lower-level MBR routines when the last (other)
+   component decides it's no longer interested in the given group range.
+   Current multicast protocols will either use 0/0 to un-request all groups,
+   or specify a single group.
+
+   static void
+   aux_join_recv(gaddr, ifap, dsproto)
+      sockaddr_un *gaddr;
+      if_addr     *ifap;
+      int          dsproto;
+
+   This is called by the lower-level MBR routines when the IGMP or Static
+   component decides it's interested in the given group on the given
+   interface.  This alert is then sent to the component owning the
+   interface.  The dsproto argument will be DSPROTO_IGMP for IGMP and
+   DSPROTO_STATIC for Static.
+
+   static void
+   aux_prune_recv(gaddr, ifap, dsproto)
+      sockaddr_un *gaddr;
+      if_addr     *ifap;
+      int          dsproto;
+
+   This is called by the lower-level MBR routines when the IGMP or Static
+   component decides it's no longer interested in the given group on the 
+   given interface.  This alert is then sent to the component owning the
+   interface.  The dsproto argument will be DSPROTO_IGMP for IGMP and
+   DSPROTO_STATIC for Static.
+
+   static struct sockaddr_list *
+   get_neighbors(ifap)
+      if_addr     *ifap;
+
+   This is called by the lower-level MBR routines to request a list of
+   addresses of all peers (for use with "mrinfo").  The component should
+   return a linked list of sockaddr_list structures.  The current convention
+   is to return a pointer to a dummy head in a static structure with all
+   the actual list elements being dynamically allocated.  The MBR layer
+   will free all entries beyond the dummy head.
+
+int                /* OUT: TRUE on success, FALSE on failure */
+mbr_set_iftask(ifap, tp)
+   if_addr *ifap;  /* IN : interface to grab            */
+   task    *tp;    /* IN : component doing the grabbing */
+
+A component should call this upon initialization to claim each interface
+which it thinks it should own.
+
+void
+mbr_reset_iftask(ifap, tp)
+   if_addr *ifap;  /* IN : interface to release        */ 
+   task    *tp;    /* IN : component doing the release */ 
+
+When terminating, a component should call this to relinquish its control of 
+each interface it owns.  NOTE: this could be done automatically inside 
+mbr_unregister() in the future.
+
+void
+mbr_unregister(tp)
+   task *tp;                   /* IN: component */
+
+When terminating, a component should call this to indicate that it no
+longer wishes to receive alerts of any type.
+
+task *                 /* OUT: component owning the iface, or NULL if none */
+mbr_get_iftask(ifap)
+   if_addr *ifap;      /* IN : interface                  */
+
+This can be used to look up which component owns an interface, although
+I'm not sure why a component would need to do this.
+
+upstream_t *                  /* OUT: upstream information, or NULL if none */
+mbr_locate_upstream(src_addr)
+   sockaddr_un *src_addr;     /* IN : source address */
+
+This can be used to find the correct upstream interface and neighbor for
+a particular address.  Note that the ifap field of upstream information
+returned will never be NULL (although the nbr field may be, I think, if
+the source is directly connected on that interface).
+
+void
+mbr_sg_add_downstream(saddr, gaddr, ds) 
+   sockaddr_un  *saddr; /* IN: source address */
+   sockaddr_un  *gaddr; /* IN: group address  */
+   downstream_t *ds;    /* IN: oif to add     */
+
+This should be called by a component wishing to add a single oif to a
+kernel cache entry.  If the oiflist was previously empty, an (S,G)
+Join alert will be sent to the owner of the iif (which could be the
+same component).
+
+void
+mbr_sg_delete_downstream(saddr, gaddr, ds)
+   sockaddr_un  *saddr; /* IN: source address */
+   sockaddr_un  *gaddr; /* IN: group address  */
+   downstream_t *ds;    /* IN: oif to delete  */
+
+This should be called by a component wishing to delete a single oif from
+a kernel cache entry.  If the oiflist becomes empty as a result, an (S,G)
+Prune alert will be sent to the owner of the iif (which could be the same
+component).
+
+void
+mbr_grp_register_interest(gaddr, gmask, tp)
+   sockaddr_un  *gaddr; /* IN: group address  */
+   sockaddr_un  *gmask; /* IN: group mask     */
+   task         *tp;    /* IN: oif to add     */
+
+This should be called by a component wishing to register interest
+in a specific group (prefix), and may result in sending (*,G) Join alerts 
+to one or more other components (but never the same component).
+
+void   
+mbr_grp_unregister_interest(gaddr, gmask, tp)
+   sockaddr_un  *gaddr; /* IN: group address       */
+   sockaddr_un  *gmask; /* IN: group mask          */
+   task         *tp;    /* IN: component to delete */
+
+This should be called by a component wishing to UNregister interest
+in a specific group (prefix), and may result in sending (*,G) Prune alerts
+to one or more other components (but never the same component).
+
+void
+mbr_grp_add_downstream(gaddr, ds)
+   sockaddr_un  *gaddr; /* IN: group address  */
+   downstream_t *ds;    /* IN: oif to add     */
+
+This should be called by a component wishing to add a single oif to all
+kernel cache entries for sources in the given group.
+
+void
+mbr_grp_delete_downstream(gaddr, ds)
+   sockaddr_un  *gaddr; /* IN: group address  */
+   downstream_t *ds;    /* IN: oif to add     */
+
+This should be called by a component wishing to remove a single oif from all
+kernel cache entries for sources in the given group.
+
+void
+mbr_delete_cache(gaddr, saddr, smask)
+   sockaddr_un *gaddr;  /* IN: group address  */
+   sockaddr_un *saddr;  /* IN: source address */
+   sockaddr_un *smask;  /* IN: source mask    */
+
+A component should call this, as opposed to krt_delete_cache(), to
+indicate that it no longer requires this state to exist.
+This has the effect of deleting the MBR's state as well as removing
+the kernel's state.  This happens even if other components still have
+state for it, since it at least ensures that a creation alert will be
+generated before it's used for forwarding data.

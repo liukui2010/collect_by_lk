@@ -1,0 +1,6 @@
+depend:
+	@(echo "Building dependency list for $(PKGNAME) using $(MKDEP)" ; \
+	for i in $(LIB_SRCS); do \
+		DEP_SRCS="$$DEP_SRCS $(srcdir)/$$i" ; \
+	done ; \
+	CC=$(CC) $(MKDEP) $(INCLUDES) $$DEP_SRCS)

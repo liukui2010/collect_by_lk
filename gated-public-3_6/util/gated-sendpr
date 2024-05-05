@@ -1,0 +1,267 @@
+#!/bin/sh
+#
+# $Id: gated-sendpr,v 1.1 1999/09/16 19:50:31 naamato Exp $
+#
+
+# Find the GateD release tag-- we might be invoked from the release root.
+RELEASE=`( [ -f RELEASE ] && cat RELEASE ) || \
+	 ( [ -f $HOME/gated/RELEASE ] && cat $HOME/gated/RELEASE ) || \
+	 ( echo -n )`
+
+# submitter id tag
+SUBMITTER_ID=net
+
+# GNATS site
+MAILTO=gnats@merit.edu
+
+# our username        
+if [ X"$USER" != X"" ]; then
+	USERNAME="$USER"
+elif [ `/usr/ucb/whoami` ]; then
+	USERNAME=`/usr/ucb/whoami`
+elif [ `/usr/bin/whoami` ]; then
+	USERNAME=`/usr/bin/whoami`
+fi
+
+# real name
+if [ X"$USERNAME" != X"" ]; then
+	ORIGINATOR=`grep $USERNAME /etc/passwd | awk -F: '{ print $5 }'`
+elif [ X"$USERNAME" != X"" ]; then
+	ORIGINATOR="$NAME"
+fi
+
+# domain name
+if [ -f /etc/defaultdomain ]; then
+	DOMAIN=`cat /etc/defaultdomain`
+else
+	DOMAIN=""
+fi
+
+if [ X"$USERNAME" != X"" -a X"$DOMAIN" != X"" ]; then
+	FROM="$USERNAME@$DOMAIN"
+fi
+
+# system information
+
+if   [ -f src/util/archtype ]; then
+	SYSTEM=`src/util/archtype | sed 's/\([^-]*-[^-]*\)-.*/\1/'`;
+elif [ -f $HOME/gated/src/util/archtype ]; then
+	SYSTEM=`$HOME/gated/src/util/archtype| sed 's/\([^-]*-[^-]*\)-.*/\1/'`
+elif [ X"$os" != X""  ]; then
+	SYSTEM="$os"
+elif [ X"$OSTYPE" != X"" ]; then
+	SYSTEM="$OSTYPE"
+elif [ -f /usr/bin/uname ]; then
+	SYSTEM=`/usr/bin/uname -sr`
+else
+	SYSTEM=`echo`
+fi
+
+# type of architecture
+if [ -f src/util/archtype ]; then
+	ARCH=`src/util/archtype | sed 's/[^-]*-[^-]*-\(.*\)/\1/'`
+elif [ -f $HOME/gated/src/util/archtype ]; then
+	ARCH=`$HOME/gated/src/util/archtype | sed 's/[^-]*-[^-]*-\(.*\)/\1/'`
+elif [ -f /usr/bin/uname ]; then
+	ARCH=`/usr/bin/uname -m`
+elif [ -f /usr/bin/arch ]; then
+	ARCH=`/usr/bin/arch`
+else
+	ARCH=""
+fi
+
+# editor
+if [ "$EDITOR" != "" ]; then
+	ED="$EDITOR"
+else
+	ED="vi"
+fi
+
+# mailer
+if   [ -f /usr/lib/sendmail ]; then
+	MAILER="/usr/lib/sendmail -oi -t"
+elif [ -f /usr/sbin/sendmail ]; then
+	MAILER="/usr/sbin/sendmail -oi -t"
+else 
+	echo ""
+	echo "I can't find a default mailer to use."
+	echo "Edit $0 and define \$MAILER"
+	echo ""
+fi
+
+# temporary directory
+if [ X"$TMPDIR" != X"" ]; then
+	TMPFILE="$TMPDIR/gated.sendpr.temp" 
+else
+	TMPFILE="/tmp/gated.sendpr.temp"
+fi
+
+
+cat >> $TMPFILE << _END_
+
+SEND-PR: Lines that begin with "SEND-PR:" will be removed.
+SEND-PR: Categories are as follows:
+SEND-PR:	
+SEND-PR:	gated-autoconf	gated-bgp	gated-bgp4+
+SEND-PR:	gated-dvmrp	gated-idrp	gated-igmp
+SEND-PR:	gated-isis	gated-gii	gated-gum
+SEND-PR:	gated-misc	gated-multicast	gated-new-ospf
+SEND-PR:	gated-ospf	gated-pimsm	gated-pimdm
+SEND-PR:	gated-rip	gated-ripng	gated-snmp
+SEND-PR:	gated-tools	gated-unicast	gated-v6
+SEND-PR:	gated-web	gated-doc
+
+SEND-PR: If you experience trouble using this script, you may submit
+SEND-PR: PR's via an online form at http://www.merit.net/gated/support/
+SEND-PR:
+
+To: $MAILTO
+From: $FROM
+Cc:
+	
+SEND-PR: Your submitter ID. Use 'net' for public releases.
+>Submitter-Id:	net 	
+
+SEND-PR: Your name.
+>Originator: 	$ORIGINATOR
+
+SEND-PR: Your organization.
+>Organization:
+
+SEND-PR: Whether or not you would like this report to be confidential,
+SEND-PR: yes or no.  Please note that any information on the subject line  
+SEND-PR: is not confidential.
+>Confidential:
+
+SEND-PR: brief description of the problem, one line only.
+>Synopsis:
+
+SEND-PR: Severity of the problem: critical, serious, or non-critical.
+>Severity:
+
+SEND-PR: Priority for the GateD team: high, medium, or low.
+>Priority:
+
+SEND-PR: See above list of categories.
+>Category:
+
+SEND-PR: Problem class: support, sw-bug, or change-request.
+>Class:	
+
+SEND-PR: Release tag.  Change this if it's incorect or blank.
+>Release: 	$RELEASE
+
+SEND-PR:  Environment in which the problem exists.  Change if incorrect 
+SEND-PR:  or blank.
+
+>Environment:
+	System: 	$SYSTEM
+	Architechure:	$ARCH
+
+SEND-PR: A complete description of the problem.  Multiple lines OK here.
+>Description:
+
+SEND-PR: How to replicate the problem: gated.conf's used, etc.
+>How-To-Repeat:
+
+SEND-PR: A solution to the problem, if known. 
+>Fix:
+
+_END_
+
+/bin/cp $TMPFILE $TMPFILE.orig
+chmod 700 $TMPFILE $TMPFILE.orig
+
+sanity() {
+	
+	if [ "`diff $TMPFILE $TMPFILE.orig`" = "" ]; then
+		echo ""
+		echo "The form was not changed." 
+		status=FAIL_ENUM
+	elif [ "`grep \">Confidential:\" $TMPFILE | egrep 'yes|no'`"\
+		= "" ]; then
+		echo ""
+		echo "Bad value for \"Confidential\""
+		echo "Must be: (yes | no)"
+		status=FAIL_ENUM
+	elif [ "`grep \">Severity:\" $TMPFILE | \
+		egrep 'critical|non-critical|serious'`" = "" ]; then
+		echo ""
+		echo "Bad value for \"Severity\""
+		echo "Must be: (critical | serious | non-critical)"
+		status=FAIL_ENUM
+	elif [ "`grep \">Priority:\" $TMPFILE | egrep 'high|medium|low'`"\
+		= "" ]; then
+		echo ""
+		echo "Bad value for \"Priority\""
+		echo "Must be: (high | medium | low)"
+		status=FAIL_ENUM
+	elif [ "`grep \">Class:\" $TMPFILE | \
+ 		egrep 'support|sw-bug|doc-bug|change-request|support'`" \
+		 = "" ]; then
+		echo ""
+		echo "Bad value for \"Class\""
+		echo "Must be: (sw-bug | doc-bug | change-request | support )"
+		status=FAIL_ENUM
+	elif [ "`grep \">Category:\" $TMPFILE | egrep 'gated-autoconf|gated-bgp|gated-bgp4\+|gated-dvmrp|gated-idrp|gated-igmp|gated-isis|gated-gii|gated-gum|gated-misc|gated-multicast|gated-new-ospf|gated-ospf|gated-pimsm|gated-pimdm|gated-rip|gated-ripng|gated-snmp|gated-tools|gated-unicast|gated-v6|gated-web|gated-doc'`" = "" ]; \
+		then 
+		status=FAIL_CAT
+	else status=OK
+fi
+}
+
+mail_PR () {
+	SUBJECT=`grep "Synopsis:" $TMPFILE | sed 's/>Synopsis:\(.*\)/\1/'`
+	echo "Subject: $SUBJECT" > $TMPFILE.2
+	eval `sed '/^SEND-PR:.*/d' $TMPFILE | sed '/^$/d' >>$TMPFILE.2`
+	echo "Mailing PR.."
+	if $MAILER < $TMPFILE.2;  then
+		echo "done."
+		rm -f $TMPFILE $TMPFILE.2 $TMPFILE.orig
+		exit 0
+	else
+		echo "$0: mail command \"$MAILER\" failed: PR was saved"
+		echo "to $HOME/.gated-pr.dead."
+		cp $TMPFILE.2 $HOME/.gated-pr.dead
+		rm -f $TMPFILE $TMPFILE.2 $TMPFILE.orig
+		exit 1
+	fi
+}
+
+	$ED $TMPFILE
+	sanity
+	while [ "$status" = "FAIL_CAT" -o "$status" = "FAIL_ENUM" ]; do
+		case "$status" in
+			FAIL_CAT)
+				echo ""
+				echo "You entered an unrecognized category.  If"
+				echo "this is a mistake, enter an 'e' to re-edit"
+				echo "the PR, any other key to mail the PR anyway."
+				read answer
+				case "$answer" in
+					e*)	
+						cp $TMPFILE $TMPFILE.orig
+						$ED $TMPFILE
+						sanity ;;
+					*)
+						mail_PR ;;
+				esac ;;
+			FAIL_ENUM)
+				echo "Enter an 'e' to re-edit the problem report,"
+				echo "any other key to quit."
+				read answer
+				case "$answer" in
+					e*)
+						cp $TMPFILE $TMPFILE.orig
+						$ED $TMPFILE
+						sanity ;;
+					*) 
+						echo "Aborting.."
+						rm -f $TMPFILE $TMPFILE.orig
+						exit 1 ;;
+				esac ;;
+			esac
+	done
+	mail_PR
+
+# eof

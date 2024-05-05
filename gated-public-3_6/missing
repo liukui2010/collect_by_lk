@@ -1,0 +1,11 @@
+#! /bin/sh
+echo "WARNING: missing $1..."
+case $1 in
+  aclocal)    touch aclocal.m4 ;;
+  autoconf)   touch configure ;;
+  autoheader) touch config.h.in ;;
+  automake)
+    find . -name Makefile.am -print | sed 's/^\(.*\).am$/touch \1.in/' | sh
+    ;;
+esac
+exit 0
